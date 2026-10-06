@@ -19,12 +19,18 @@ class Task extends Model
         'estimated_hours',
         'priority',
         'course',
+        'source',
+        'canvas_assignment_id',
+        'canvas_course_id',
+        'canvas_due_at',
+        'canvas_url',
     ];
 
     protected function casts(): array
     {
         return [
             'deadline' => 'date',
+            'canvas_due_at' => 'datetime',
             'progress' => 'integer',
             'estimated_hours' => 'float',
         ];

@@ -220,7 +220,7 @@
     const copilotResponse = document.getElementById('copilot-response');
     const taskOrder = [...copilotTasks].sort((first, second) => {
         const riskWeight = { high: 0, medium: 1, low: 2 };
-        return riskWeight[first.risk] - riskWeight[second.risk] || first.days_remaining - second.days_remaining || second.remaining_hours - first.remaining_hours;
+        return riskWeight[first.risk] - riskWeight[second.risk] || (first.days_remaining ?? Number.MAX_SAFE_INTEGER) - (second.days_remaining ?? Number.MAX_SAFE_INTEGER) || second.remaining_hours - first.remaining_hours;
     });
 
     function answerCopilot(question) {
@@ -228,7 +228,7 @@
         const task = taskOrder[0];
         if (copilotTasks.length === 0) return 'You have no open tasks right now. Add your next assignment and I can help you plan it.';
         if (normalizedQuestion.includes('week') || normalizedQuestion.includes('catch up') || normalizedQuestion.includes('workload')) {
-            const upcoming = taskOrder.filter((item) => item.days_remaining <= 7);
+            const upcoming = taskOrder.filter((item) => item.days_remaining !== null && item.days_remaining <= 7);
             const hours = upcoming.reduce((total, item) => total + item.remaining_hours, 0);
             const nextTask = upcoming[0] || task;
             return `${upcoming.length} open ${upcoming.length === 1 ? 'assignment is' : 'assignments are'} due in the next 7 days, with about ${hours} hours of work remaining. Start with ${nextTask.title}: ${nextTask.recommendation}`;
@@ -239,7 +239,7 @@
         }
         const namedTask = taskOrder.find((item) => normalizedQuestion.includes(item.title.toLowerCase()));
         const nextTask = namedTask || task;
-        const dueText = nextTask.overdue ? 'overdue' : nextTask.days_remaining === 0 ? 'due today' : `due in ${nextTask.days_remaining} days`;
+        const dueText = nextTask.overdue ? 'overdue' : nextTask.days_remaining === null ? 'has no deadline' : nextTask.days_remaining === 0 ? 'due today' : `due in ${nextTask.days_remaining} days`;
         return `Work on ${nextTask.title} next. It is ${dueText}, ${nextTask.progress}% complete, and has ${nextTask.remaining_hours} estimated hours remaining. ${nextTask.recommendation}`;
     }
 

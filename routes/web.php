@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CanvasController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FriendController;
@@ -32,7 +33,17 @@ Route::post('/register', [AuthController::class, 'register'])->middleware(['gues
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::middleware('auth')->group(function () {
-    Route::view('/settings', 'settings.index')->name('settings.index');
+    Route::get('/settings/{section?}', function (?string $section = 'school-profile') {
+        $sections = ['school-profile', 'account', 'canvas', 'appearance', 'accessibility', 'notifications', 'emails', 'password-auth', 'web-session', 'blocked-users'];
+
+        abort_unless(in_array($section, $sections, true), 404);
+
+        return view('settings.index', [
+            'section' => $section,
+            'sections' => $sections,
+            'canvasLocalTokenConfigured' => app()->environment('local') && filled(config('services.canvas.api_key')),
+        ]);
+    })->name('settings.index');
     Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
     Route::post('/courses', [CourseController::class, 'store'])->name('courses.store');
     Route::put('/courses/{course}', [CourseController::class, 'update'])->name('courses.update');
@@ -40,6 +51,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/friends', [FriendController::class, 'index'])->name('friends.index');
     Route::post('/friends/requests', [FriendController::class, 'store'])->middleware('throttle:10,1')->name('friends.requests.store');
     Route::post('/friends/requests/{friendRequest}/respond', [FriendController::class, 'respond'])->name('friends.requests.respond');
+    Route::get('/canvas/connect', [CanvasController::class, 'connect'])->name('canvas.connect');
+    Route::get('/canvas/callback', [CanvasController::class, 'callback'])->name('canvas.callback');
+    Route::delete('/canvas/disconnect', [CanvasController::class, 'disconnect'])->name('canvas.disconnect');
+    Route::get('/ai/test', [CanvasController::class, 'aiTest'])->middleware('throttle:5,1')->name('ai.test');
+    Route::get('/canvas/test', [CanvasController::class, 'test'])->name('canvas.test');
+    Route::get('/canvas/assignments', [CanvasController::class, 'assignments'])->name('canvas.assignments');
+    Route::post('/canvas/sync', [CanvasController::class, 'sync'])->name('canvas.sync');
 });
 
 Route::resource('tasks', TaskController::class)
@@ -48,6 +66,9 @@ Route::resource('tasks', TaskController::class)
 
 Route::post('/tasks/{task}/complete', [TaskController::class, 'complete'])->middleware('auth')->name('tasks.complete');
 Route::post('/tasks/{task}/assistant', [TaskController::class, 'assistant'])->middleware(['auth', 'throttle:10,1'])->name('tasks.assistant');
+Route::post('/tasks/{task}/gemini-risk', [TaskController::class, 'analyzeGeminiRisk'])->middleware(['auth', 'throttle:5,1'])->name('tasks.gemini-risk');
+Route::post('/tasks/{task}/canvas-submit', [TaskController::class, 'submitCanvasAnswer'])->middleware(['auth', 'throttle:5,1'])->name('tasks.canvas-submit');
+Route::post('/tasks/{task}/canvas-ai-submit', [TaskController::class, 'generateAndSubmitCanvasAnswer'])->middleware(['auth', 'throttle:3,1'])->name('tasks.canvas-ai-submit');
 Route::get('/risk-report', [DashboardController::class, 'report'])->middleware('auth')->name('risk-report');
 Route::get('/calendar', [DashboardController::class, 'calendar'])->middleware('auth')->name('calendar');
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('auth')->name('dashboard');

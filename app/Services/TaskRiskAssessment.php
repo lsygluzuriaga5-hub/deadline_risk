@@ -8,11 +8,13 @@ use Illuminate\Support\Collection;
 class TaskRiskAssessment
 {
     /**
-     * @return array{level: string, score: int, overdue: bool, days_remaining: int, remaining_hours: float, reason: string, recommendation: string}
+     * @return array{level: string, score: int, overdue: bool, days_remaining: int|null, remaining_hours: float, reason: string, recommendation: string}
      */
     public function assess(Task $task): array
     {
-        $daysRemaining = (int) today()->diffInDays($task->deadline, false);
+        $daysRemaining = $task->deadline === null
+            ? null
+            : (int) today()->diffInDays($task->deadline, false);
         $remainingHours = round((float) ($task->estimated_hours ?? 0) * (100 - (int) $task->progress) / 100, 1);
         $overdue = $daysRemaining < 0 && $task->status !== 'completed';
 
@@ -41,9 +43,9 @@ class TaskRiskAssessment
         }
 
         $score = match (true) {
-            $daysRemaining <= 1 => 35,
-            $daysRemaining <= 3 => 25,
-            $daysRemaining <= 7 => 15,
+            $daysRemaining !== null && $daysRemaining <= 1 => 35,
+            $daysRemaining !== null && $daysRemaining <= 3 => 25,
+            $daysRemaining !== null && $daysRemaining <= 7 => 15,
             default => 0,
         };
         $score += match (true) {
@@ -65,9 +67,11 @@ class TaskRiskAssessment
         };
 
         $level = $score >= 55 ? 'high' : ($score >= 30 ? 'medium' : 'low');
-        $deadlinePhrase = $daysRemaining === 0
-            ? 'due today'
-            : 'due in '.$daysRemaining.' '.($daysRemaining === 1 ? 'day' : 'days');
+        $deadlinePhrase = $daysRemaining === null
+            ? 'no deadline set'
+            : ($daysRemaining === 0
+                ? 'due today'
+                : 'due in '.$daysRemaining.' '.($daysRemaining === 1 ? 'day' : 'days'));
         $reason = ucfirst($deadlinePhrase).', with '.(int) $task->progress.'% complete and about '.$remainingHours.' hours of work remaining.';
 
         if ($task->priority === 'high') {
@@ -135,7 +139,7 @@ class TaskRiskAssessment
                     'message' => $task->title.' is overdue.',
                     'task_id' => $task->id,
                 ];
-            } elseif ($assessment['days_remaining'] <= 3) {
+            } elseif ($assessment['days_remaining'] !== null && $assessment['days_remaining'] <= 3) {
                 $notifications[] = [
                     'id' => 'due-'.$task->id,
                     'level' => $assessment['level'],

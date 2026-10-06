@@ -31,7 +31,7 @@
         .auth-nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: min(100% - 32px, 1120px); min-height: 68px; margin: 0 auto; }
         .auth-brand { display: inline-flex; align-items: center; gap: 10px; min-width: 0; color: var(--text); font-family: 'Raleway', sans-serif; font-size: 16px; font-weight: 800; text-decoration: none; }
         .auth-brand:hover { color: white; }
-        .auth-brand-mark { display: grid; width: 34px; height: 34px; flex: 0 0 34px; place-items: center; border-radius: 8px; background: var(--teal); color: #082729; }
+        .auth-brand-mark {width: 60px; height: 60px; display:blocks; object-fit:cover; border-radius: 12px; flex: shrink flex; }
         .auth-links { display: flex; align-items: center; gap: 16px; padding: 0; margin: 0; list-style: none; }
         .auth-links a { color: #bbd3ce; font-size: 13px; text-decoration: none; }
         .auth-links a:hover { color: white; }
@@ -93,7 +93,6 @@
         @media (max-width: 400px) {
             .auth-nav { width: calc(100% - 24px); gap: 9px; }
             .auth-brand { gap: 7px; font-size: 14px; }
-            .auth-brand-mark { width: 30px; height: 30px; flex-basis: 30px; }
             .auth-links { gap: 10px; }
             .auth-links a { font-size: 12px; }
             .auth-main { padding: 30px 12px 32px; }
@@ -105,7 +104,7 @@
     <div id="app">
         <header class="auth-header">
             <nav class="auth-nav" aria-label="Main navigation">
-                <a class="auth-brand" href="{{ url('/') }}"><span class="auth-brand-mark" aria-hidden="true">D</span><span>Deadline Risk AI</span></a>
+                <img src="{{ asset('images/logo.jpg') }}" alt="Deadline Risk AI Logo" class="auth-brand-mark" /> <span>Deadline Risk AI</span>
                 <ul class="auth-links">
                     <li><button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to light mode" aria-pressed="false" title="Switch to light mode">☀</button></li>
                     @guest

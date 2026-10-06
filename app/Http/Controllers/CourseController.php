@@ -79,6 +79,7 @@ class CourseController extends Controller
             ]);
         }
 
+        $validated['name'] = trim($validated['name']);
         $validated['grading_components'] = $components === [] ? null : $components;
 
         return $validated;

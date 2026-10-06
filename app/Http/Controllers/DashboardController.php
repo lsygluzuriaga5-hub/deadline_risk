@@ -41,21 +41,22 @@ class DashboardController extends Controller
         $activeTasks = $tasks->where('status', '!=', 'completed');
         $focusTasks = $this->prioritize($activeTasks, $summary['assessments'])->take(3);
         $insightTask = $focusTasks->first();
-        $todayTasks = $activeTasks->filter(fn (Task $task): bool => $summary['assessments'][$task->id]['days_remaining'] <= 0)->values();
+        $todayTasks = $activeTasks->filter(fn (Task $task): bool => $summary['assessments'][$task->id]['days_remaining'] !== null && $summary['assessments'][$task->id]['days_remaining'] <= 0)->values();
         $upcomingTasks = $activeTasks
-            ->filter(fn (Task $task): bool => $summary['assessments'][$task->id]['days_remaining'] > 0 && $summary['assessments'][$task->id]['days_remaining'] <= 14)
+            ->filter(fn (Task $task): bool => $summary['assessments'][$task->id]['days_remaining'] !== null && $summary['assessments'][$task->id]['days_remaining'] > 0 && $summary['assessments'][$task->id]['days_remaining'] <= 14)
             ->sortBy(fn (Task $task): int => $task->deadline?->timestamp ?? PHP_INT_MAX)
             ->values();
         $dueTodayCount = $activeTasks->filter(fn (Task $task): bool => $summary['assessments'][$task->id]['days_remaining'] === 0)->count();
         $dueDateCounts = $activeTasks->countBy(fn (Task $task): string => $task->deadline?->toDateString() ?? '');
         $attentionTasks = $activeTasks->filter(function (Task $task) use ($summary): bool {
             $assessment = $summary['assessments'][$task->id];
+            $daysRemaining = $assessment['days_remaining'];
 
             return $assessment['overdue']
                 || $assessment['level'] === 'high'
-                || $assessment['days_remaining'] <= 3
-                || ((int) $task->progress === 0 && $assessment['days_remaining'] <= 10)
-                || ($assessment['remaining_hours'] >= 8 && $assessment['days_remaining'] <= 7);
+                || ($daysRemaining !== null && $daysRemaining <= 3)
+                || ((int) $task->progress === 0 && $daysRemaining !== null && $daysRemaining <= 10)
+                || ($assessment['remaining_hours'] >= 8 && $daysRemaining !== null && $daysRemaining <= 7);
         })->values();
         $attentionAlerts = $attentionTasks->map(function (Task $task) use ($dueDateCounts, $summary): array {
             $assessment = $summary['assessments'][$task->id];
@@ -63,7 +64,7 @@ class DashboardController extends Controller
 
             if ($assessment['overdue']) {
                 $reasons[] = 'Overdue';
-            } elseif ($assessment['days_remaining'] <= 3) {
+            } elseif ($assessment['days_remaining'] !== null && $assessment['days_remaining'] <= 3) {
                 $reasons[] = 'Deadline approaching';
             }
 
@@ -120,7 +121,7 @@ class DashboardController extends Controller
         };
         $activity = collect(range(0, 6))->map(function (int $offset) use ($tasks, $summary): array {
             $date = today()->addDays($offset);
-            $dueTasks = $tasks->filter(fn (Task $task): bool => $task->deadline?->isSameDay($date));
+            $dueTasks = $tasks->filter(fn (Task $task): bool => $task->deadline?->isSameDay($date) ?? false);
             $levels = ['high' => 0, 'medium' => 0, 'low' => 0, 'completed' => 0];
 
             foreach ($dueTasks as $task) {
@@ -194,7 +195,7 @@ class DashboardController extends Controller
         $summary = $riskAssessment->summarize($tasks);
         $activeTasks = $tasks->where('status', '!=', 'completed');
         $assessments = $summary['assessments'];
-        $dueSoon = $activeTasks->filter(fn (Task $task): bool => $assessments[$task->id]['days_remaining'] >= 0 && $assessments[$task->id]['days_remaining'] <= 3)->count();
+        $dueSoon = $activeTasks->filter(fn (Task $task): bool => $assessments[$task->id]['days_remaining'] !== null && $assessments[$task->id]['days_remaining'] >= 0 && $assessments[$task->id]['days_remaining'] <= 3)->count();
         $highBelowHalf = $activeTasks->filter(fn (Task $task): bool => $assessments[$task->id]['level'] === 'high' && (int) $task->progress < 50)->count();
         $topRiskTask = $this->prioritize($activeTasks, $assessments)->first();
         $recommendations = [];

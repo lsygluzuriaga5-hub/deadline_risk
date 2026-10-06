@@ -319,6 +319,7 @@
 
             <main class="page-wrap">
                 @if (session('success'))<div class="flash" role="status">{{ session('success') }}</div>@endif
+                @if (session('error'))<div class="error-list" role="alert">{{ session('error') }}</div>@endif
                 @if ($errors->any())
                     <ul class="error-list" role="alert">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
                 @endif

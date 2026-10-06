@@ -4,7 +4,15 @@
 @section('eyebrow', 'Your workload')
 @section('heading', 'Tasks')
 @section('subtitle', 'Search, sort, and prioritize work across your courses.')
-@section('page-action')<a class="button" href="{{ route('tasks.create') }}">＋ Add task</a>@endsection
+@section('page-action')
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <form method="POST" action="{{ route('canvas.sync') }}">
+            @csrf
+            <button class="button secondary" type="submit">Sync Canvas assignments</button>
+        </form>
+        <a class="button" href="{{ route('tasks.create') }}">＋ Add task</a>
+    </div>
+@endsection
 
 @section('content')
     <style>

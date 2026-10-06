@@ -1,14 +1,14 @@
 {
     "agents": [
-        "copilot"
+        "claude_code"
     ],
-    "cloud": false,
-    "guidelines": true,
+    "cloud": true,
     "mcp": true,
     "nightwatch": false,
     "sail": false,
     "skills": [
         "infer-conventions",
+        "deploying-to-cloud",
         "laravel-best-practices",
         "testing-best-practices",
         "tailwindcss-development"

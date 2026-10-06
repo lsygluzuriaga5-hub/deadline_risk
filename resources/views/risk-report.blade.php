@@ -63,7 +63,7 @@
                     @php
                         $bucketCount = $tasks->where('status', '!=', 'completed')->filter(function ($task) use ($assessments, $bucket) {
                             $days = $assessments[$task->id]['days_remaining'];
-                            return match ($bucket['filter']) { 'overdue' => $days < 0, 'soon' => $days >= 0 && $days <= 3, 'week' => $days >= 4 && $days <= 7, default => $days > 7 };
+                            return match ($bucket['filter']) { 'overdue' => $days !== null && $days < 0, 'soon' => $days !== null && $days >= 0 && $days <= 3, 'week' => $days !== null && $days >= 4 && $days <= 7, default => $days === null || $days > 7 };
                         })->count();
                         $bucketWidth = $summary['counts']['open'] === 0 ? 0 : (int) round(($bucketCount / $summary['counts']['open']) * 100);
                     @endphp
@@ -78,7 +78,7 @@
             @if ($openTasks->isNotEmpty())
                 <div class="pressure-list">
                     @foreach ($openTasks as $task)
-                        <div class="pressure-row"><div style="min-width:0;flex:1;"><a href="{{ route('tasks.show', $task) }}">{{ $task->title }}</a><small>Due {{ $task->deadline?->format('M j, Y') }}</small></div><span style="min-width:34px;color:#d8ebe5;font-size:11px;text-align:right;">{{ $task->progress }}%</span><div class="progress-track" style="width:90px;"><span style="width:{{ $task->progress }}%"></span></div></div>
+                        <div class="pressure-row"><div style="min-width:0;flex:1;"><a href="{{ route('tasks.show', $task) }}">{{ $task->title }}</a><small>{{ $task->deadline?->format('M j, Y') ?? 'No deadline set' }}</small></div><span style="min-width:34px;color:#d8ebe5;font-size:11px;text-align:right;">{{ $task->progress }}%</span><div class="progress-track" style="width:90px;"><span style="width:{{ $task->progress }}%"></span></div></div>
                     @endforeach
                 </div>
             @else

@@ -1,0 +1,32 @@
+warning: in the working copy of 'boost.json', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/views/dashboard/overview.blade.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/views/emails/login-otp.blade.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/views/layouts/risk.blade.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/views/risk-report.blade.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/views/tasks/form.blade.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/views/tasks/manage.blade.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'resources/views/tasks/show.blade.php', CRLF will be replaced by LF the next time Git touches it
+ .env.example                                 |   8 [32m+[m
+ app/Http/Controllers/AuthController.php      |   6 [32m+[m[31m-[m
+ app/Http/Controllers/CourseController.php    |   1 [32m+[m
+ app/Http/Controllers/DashboardController.php |  17 [32m+[m[31m-[m
+ app/Http/Controllers/TaskController.php      |  91 [32m++++++[m[31m-[m
+ app/Models/Task.php                          |   6 [32m+[m
+ app/Models/User.php                          |   5 [32m+[m[31m-[m
+ app/Services/AiTaskAssistant.php             |  28 [32m++[m[31m-[m
+ app/Services/CanvasService.php               | 343 [32m+++++++++++++++++++++++++++[m
+ app/Services/TaskRiskAssessment.php          |  22 [32m+[m[31m-[m
+ boost.json                                   |   6 [32m+[m[31m-[m
+ config/services.php                          |  12 [32m+[m[31m-[m
+ resources/views/dashboard/overview.blade.php |   6 [32m+[m[31m-[m
+ resources/views/emails/login-otp.blade.php   |   2 [32m+[m
+ resources/views/layouts/app.blade.php        |   5 [32m+[m[31m-[m
+ resources/views/layouts/risk.blade.php       |   1 [32m+[m
+ resources/views/risk-report.blade.php        |   4 [32m+[m[31m-[m
+ resources/views/settings/index.blade.php     | 110 [32m+++++[m[31m----[m
+ resources/views/tasks/form.blade.php         |   5 [32m+[m[31m-[m
+ resources/views/tasks/manage.blade.php       |  10 [32m+[m[31m-[m
+ resources/views/tasks/show.blade.php         |  33 [32m++[m[31m-[m
+ routes/api.php                               | 147 [32m++++++++++[m[31m--[m
+ routes/web.php                               |  23 [32m+[m[31m-[m
+ 23 files changed, 781 insertions(+), 110 deletions(-)

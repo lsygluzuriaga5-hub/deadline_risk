@@ -39,5 +39,15 @@ return [
         'api_key' => env('OPENAI_API_KEY'),
         'model' => env('OPENAI_MODEL', 'gpt-5-mini'),
     ],
-
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-3.8-flash'),
+    ],
+    'canvas' => [
+        'url' => env('CANVAS_URL'),
+        'api_key' => env('CANVAS_API_KEY'),
+        'client_id' => env('CANVAS_CLIENT_ID'),
+        'client_secret' => env('CANVAS_CLIENT_SECRET'),
+        'redirect_uri' => env('CANVAS_REDIRECT_URI'),
+    ],
 ];

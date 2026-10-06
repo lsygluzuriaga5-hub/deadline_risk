@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Services\AiTaskAssistant;
+use App\Services\CanvasService;
+use App\Services\GeminiService;
 use App\Services\TaskRiskAssessment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -11,6 +13,36 @@ use Illuminate\View\View;
 
 class TaskController extends Controller
 {
+    public function analyzeGeminiRisk(
+        Request $request,
+        Task $task,
+        GeminiService $gemini,
+        TaskRiskAssessment $riskAssessment
+    ): RedirectResponse {
+        $this->ensureTaskOwnership($request, $task);
+        $assessment = $riskAssessment->assess($task);
+
+        try {
+            $analysis = $gemini->analyzeDeadlineRisk([
+                'title' => $task->title,
+                'course' => $task->course,
+                'deadline' => $task->deadline?->toDateString(),
+                'estimated_hours' => $task->estimated_hours,
+                'priority' => $task->priority,
+                'progress' => $task->progress,
+                'remaining_hours' => $assessment['remaining_hours'],
+                'risk_level' => $assessment['level'],
+                'risk_reason' => $assessment['reason'],
+            ]);
+        } catch (\RuntimeException $exception) {
+            return redirect()->route('tasks.show', $task)
+                ->with('gemini_error', $exception->getMessage());
+        }
+
+        return redirect()->route('tasks.show', $task)
+            ->with('gemini_analysis', $analysis);
+    }
+
     public function assistant(Request $request, Task $task, AiTaskAssistant $assistant): RedirectResponse
     {
         $this->ensureTaskOwnership($request, $task);
@@ -30,6 +62,57 @@ class TaskController extends Controller
         return redirect()->route('tasks.show', $task)
             ->with('assistant_question', $validated['question'])
             ->with('assistant_answer', $answer);
+    }
+
+    public function submitCanvasAnswer(Request $request, Task $task, CanvasService $canvas): RedirectResponse
+    {
+        $this->ensureTaskOwnership($request, $task);
+
+        $validated = $request->validate([
+            'answer' => ['required', 'string', 'max:100000'],
+        ]);
+
+        try {
+            $canvas->submitTextAnswer(
+                $request->user(),
+                (string) $task->canvas_course_id,
+                (string) $task->canvas_assignment_id,
+                $validated['answer']
+            );
+        } catch (\RuntimeException $exception) {
+            return redirect()->route('tasks.show', $task)
+                ->withInput()
+                ->with('canvas_submit_error', $exception->getMessage());
+        }
+
+        return redirect()->route('tasks.show', $task)
+            ->with('success', 'Your answer was submitted to Canvas.');
+    }
+
+    public function generateAndSubmitCanvasAnswer(
+        Request $request,
+        Task $task,
+        AiTaskAssistant $assistant,
+        CanvasService $canvas
+    ): RedirectResponse {
+        $this->ensureTaskOwnership($request, $task);
+
+        try {
+            $answer = $assistant->draftCanvasAssignmentAnswer($task);
+            $canvas->submitTextAnswer(
+                $request->user(),
+                (string) $task->canvas_course_id,
+                (string) $task->canvas_assignment_id,
+                $answer
+            );
+        } catch (\RuntimeException $exception) {
+            return redirect()->route('tasks.show', $task)
+                ->with('canvas_submit_error', $exception->getMessage());
+        }
+
+        return redirect()->route('tasks.show', $task)
+            ->with('success', 'The AI-generated answer was submitted to Canvas.')
+            ->with('canvas_ai_answer', $answer);
     }
 
     public function index(Request $request, TaskRiskAssessment $riskAssessment): View
@@ -94,13 +177,15 @@ class TaskController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'deadline' => 'required|date',
+            'deadline' => 'nullable|date',
             'status' => 'required|in:pending,in_progress,completed',
             'progress' => 'required|integer|between:0,100',
             'estimated_hours' => 'nullable|numeric|min:0|max:9999',
             'priority' => 'required|in:low,normal,high',
             'course' => 'nullable|string|max:100',
         ]);
+
+        $validated['course'] = filled($validated['course'] ?? null) ? trim($validated['course']) : null;
 
         if ($validated['status'] === 'completed') {
             $validated['progress'] = 100;
@@ -144,13 +229,15 @@ class TaskController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'deadline' => 'required|date',
+            'deadline' => 'nullable|date',
             'status' => 'required|in:pending,in_progress,completed',
             'progress' => 'required|integer|between:0,100',
             'estimated_hours' => 'nullable|numeric|min:0|max:9999',
             'priority' => 'required|in:low,normal,high',
             'course' => 'nullable|string|max:100',
         ]);
+
+        $validated['course'] = filled($validated['course'] ?? null) ? trim($validated['course']) : null;
 
         if ($validated['status'] === 'completed') {
             $validated['progress'] = 100;

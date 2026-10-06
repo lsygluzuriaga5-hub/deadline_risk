@@ -43,19 +43,20 @@
 
     <div class="settings-page">
         <nav class="settings-menu" aria-label="Settings sections">
-            <a href="#school-profile">School profile</a>
-            <a href="#account">Account</a>
-            <a href="#appearance">Appearance</a>
-            <a href="#accessibility">Accessibility</a>
-            <a href="#notifications">Notifications</a>
-            <a href="#emails">Emails</a>
-            <a href="#password-auth">Password &amp; authentication</a>
-            <a href="#web-session">Web session</a>
-            <a href="#blocked-users">Blocked users</a>
+            <a href="{{ route('settings.index', 'school-profile') }}" @if($section === 'school-profile') aria-current="page" @endif>School profile</a>
+            <a href="{{ route('settings.index', 'account') }}" @if($section === 'account') aria-current="page" @endif>Account</a>
+            <a href="{{ route('settings.index', 'canvas') }}" @if($section === 'canvas') aria-current="page" @endif>Canvas sync account</a>
+            <a href="{{ route('settings.index', 'appearance') }}" @if($section === 'appearance') aria-current="page" @endif>Appearance</a>
+            <a href="{{ route('settings.index', 'accessibility') }}" @if($section === 'accessibility') aria-current="page" @endif>Accessibility</a>
+            <a href="{{ route('settings.index', 'notifications') }}" @if($section === 'notifications') aria-current="page" @endif>Notifications</a>
+            <a href="{{ route('settings.index', 'emails') }}" @if($section === 'emails') aria-current="page" @endif>Emails</a>
+            <a href="{{ route('settings.index', 'password-auth') }}" @if($section === 'password-auth') aria-current="page" @endif>Password &amp; authentication</a>
+            <a href="{{ route('settings.index', 'web-session') }}" @if($section === 'web-session') aria-current="page" @endif>Web session</a>
+            <a href="{{ route('settings.index', 'blocked-users') }}" @if($section === 'blocked-users') aria-current="page" @endif>Blocked users</a>
         </nav>
 
         <div class="settings-content">
-            <section class="settings-card" id="school-profile" aria-labelledby="school-title">
+            @if($section === 'school-profile')<section class="settings-card" id="school-profile" aria-labelledby="school-title">
                 <h2 id="school-title">School profile</h2>
                 <p>Add school details to personalize your workspace. These details are saved in this browser.</p>
                 <form class="settings-form" id="school-profile-form">
@@ -65,16 +66,33 @@
                     <button class="button small" type="submit">Save school profile</button>
                     <span class="settings-status" id="school-profile-status" role="status"></span>
                 </form>
-            </section>
+            </section>@endif
 
-            <section class="settings-card" id="account" aria-labelledby="account-title">
+            @if($section === 'account')<section class="settings-card" id="account" aria-labelledby="account-title">
                 <h2 id="account-title">Account</h2>
                 <p>Your account identity and sign-in email.</p>
                 <div class="settings-row"><div><strong>Name</strong><small>Account display name</small></div><span class="settings-value">{{ auth()->user()->name }}</span></div>
                 <div class="settings-row"><div><strong>Email address</strong><small>Used for sign-in and account messages</small></div><span class="settings-value">{{ auth()->user()->email }}</span></div>
-            </section>
+            </section>@endif
 
-            <section class="settings-card" id="appearance" aria-labelledby="appearance-title">
+            @if($section === 'canvas')<section class="settings-card" id="canvas-account" aria-labelledby="canvas-account-title">
+                <h2 id="canvas-account-title">Canvas sync account</h2>
+                <p>Authorize your Canvas account so assignments sync into your task list. Your Canvas access token is stored encrypted.</p>
+                @if(auth()->user()->canvas_access_token)
+                    <div class="settings-row"><div><strong>Connected Canvas account</strong><small>{{ auth()->user()->canvas_user_name ?: 'Canvas user' }} · ID {{ auth()->user()->canvas_user_id }}</small></div><span class="settings-value">Connected</span></div>
+                    <div class="settings-row"><div><strong>Manage authorization</strong><small>Reconnect to replace the Canvas account linked here, or disconnect it.</small></div><div class="settings-actions"><a class="button secondary small" href="{{ route('canvas.connect') }}">Replace account</a><form method="POST" action="{{ route('canvas.disconnect') }}" onsubmit="return confirm('Disconnect this Canvas account?')">@csrf @method('DELETE')<button class="button danger small" type="submit">Disconnect</button></form></div></div>
+                @else
+                    @if($canvasLocalTokenConfigured)
+                        <div class="settings-empty" style="margin-bottom:14px;">Using the local Canvas test token from the server environment. Sync is enabled for local development; OAuth is needed outside this local app.</div>
+                        <div class="settings-actions"><a class="button" href="{{ route('tasks.index') }}">Go to tasks and sync</a><a class="button secondary" href="{{ route('dashboard') }}">Continue to dashboard</a></div>
+                    @else
+                        <div class="settings-empty" style="margin-bottom:14px;">No Canvas account is connected yet.</div>
+                        <div class="settings-actions"><a class="button" href="{{ route('canvas.connect') }}">Connect Canvas account</a><a class="button secondary" href="{{ route('dashboard') }}">Continue without Canvas</a></div>
+                    @endif
+                @endif
+            </section>@endif
+
+            @if($section === 'appearance')<section class="settings-card" id="appearance" aria-labelledby="appearance-title">
                 <h2 id="appearance-title">Appearance</h2>
                 <p>Choose the color theme for your workspace.</p>
                 <div class="settings-row"><div><strong>Theme</strong><small>Your selection is saved on this device.</small></div>
@@ -83,47 +101,47 @@
                         <button class="settings-action" type="button" data-theme-choice="dark">Dark</button>
                     </div>
                 </div>
-            </section>
+            </section>@endif
 
-            <section class="settings-card" id="accessibility" aria-labelledby="accessibility-title">
+            @if($section === 'accessibility')<section class="settings-card" id="accessibility" aria-labelledby="accessibility-title">
                 <h2 id="accessibility-title">Accessibility</h2>
                 <p>Adjust visual preferences for this browser.</p>
                 <div class="settings-row"><div><strong>Larger text</strong><small>Increase the size of text across the workspace.</small></div><label class="settings-switch"><input type="checkbox" data-preference="large-text" aria-label="Larger text"><span></span></label></div>
                 <div class="settings-row"><div><strong>Reduce motion</strong><small>Limit animated transitions and movement.</small></div><label class="settings-switch"><input type="checkbox" data-preference="reduce-motion" aria-label="Reduce motion"><span></span></label></div>
-            </section>
+            </section>@endif
 
-            <section class="settings-card" id="notifications" aria-labelledby="notifications-title">
+            @if($section === 'notifications')<section class="settings-card" id="notifications" aria-labelledby="notifications-title">
                 <h2 id="notifications-title">Notifications</h2>
                 <p>Choose which study reminders you want enabled in this browser.</p>
                 <div class="settings-row"><div><strong>Deadline reminders</strong><small>Show reminders for approaching and overdue tasks.</small></div><label class="settings-switch"><input type="checkbox" data-preference="deadline-notifications" aria-label="Deadline reminders"><span></span></label></div>
                 <div class="settings-row"><div><strong>Friend requests</strong><small>Show updates when someone sends or responds to a request.</small></div><label class="settings-switch"><input type="checkbox" data-preference="friend-notifications" aria-label="Friend request notifications"><span></span></label></div>
-            </section>
+            </section>@endif
 
-            <section class="settings-card" id="emails" aria-labelledby="emails-title">
+            @if($section === 'emails')<section class="settings-card" id="emails" aria-labelledby="emails-title">
                 <h2 id="emails-title">Emails</h2>
                 <p>Manage the email address associated with your account.</p>
                 <div class="settings-row"><div><strong>Current email</strong><small>Email changes require verification.</small></div><span class="settings-value">{{ auth()->user()->email }}</span></div>
-            </section>
+            </section>@endif
 
-            <section class="settings-card" id="password-auth" aria-labelledby="password-title">
+            @if($section === 'password-auth')<section class="settings-card" id="password-auth" aria-labelledby="password-title">
                 <h2 id="password-title">Password &amp; authentication</h2>
                 <p>Protect your account and control how you sign in.</p>
                 <div class="settings-row"><div><strong>Password</strong><small>Password changes are managed through the secure account recovery flow.</small></div><a class="text-button" href="{{ route('home') }}#forgot-password">Password help</a></div>
                 <div class="settings-row"><div><strong>Email verification</strong><small>A one-time code is used to verify sign-ins.</small></div><span class="settings-value">Enabled</span></div>
-            </section>
+            </section>@endif
 
-            <section class="settings-card" id="web-session" aria-labelledby="session-title">
+            @if($section === 'web-session')<section class="settings-card" id="web-session" aria-labelledby="session-title">
                 <h2 id="session-title">Web session</h2>
                 <p>Review the current browser session.</p>
                 <div class="settings-row"><div><strong>Current session</strong><small>This browser · signed in as {{ auth()->user()->email }}</small></div><span class="settings-value">Active</span></div>
                 <div class="settings-row"><div><strong>Sign out</strong><small>End this session on the current device.</small></div><form method="POST" action="{{ route('logout') }}">@csrf<button class="button secondary small" type="submit">Sign out</button></form></div>
-            </section>
+            </section>@endif
 
-            <section class="settings-card" id="blocked-users" aria-labelledby="blocked-title">
+            @if($section === 'blocked-users')<section class="settings-card" id="blocked-users" aria-labelledby="blocked-title">
                 <h2 id="blocked-title">Moderation: Blocked users</h2>
                 <p>Blocked users would appear here and could no longer send you friend requests.</p>
                 <div class="settings-empty">You have not blocked anyone.</div>
-            </section>
+            </section>@endif
         </div>
     </div>
 
@@ -134,26 +152,28 @@
             const schoolStatus = document.getElementById('school-profile-status');
             const schoolFields = ['school', 'program', 'year'];
 
-            try {
-                const schoolProfile = JSON.parse(localStorage.getItem(prefix + 'school-profile') || '{}');
-                schoolFields.forEach((field) => {
-                    schoolForm.elements[field].value = schoolProfile[field] || '';
-                });
-            } catch (error) {
-                // Keep the form usable when browser storage is unavailable or invalid.
-            }
-
-            schoolForm.addEventListener('submit', (event) => {
-                event.preventDefault();
-                const schoolProfile = Object.fromEntries(schoolFields.map((field) => [field, schoolForm.elements[field].value.trim()]));
-
+            if (schoolForm) {
                 try {
-                    localStorage.setItem(prefix + 'school-profile', JSON.stringify(schoolProfile));
-                    schoolStatus.textContent = 'School profile saved on this device.';
+                    const schoolProfile = JSON.parse(localStorage.getItem(prefix + 'school-profile') || '{}');
+                    schoolFields.forEach((field) => {
+                        schoolForm.elements[field].value = schoolProfile[field] || '';
+                    });
                 } catch (error) {
-                    schoolStatus.textContent = 'Could not save in this browser.';
+                    // Keep the form usable when browser storage is unavailable or invalid.
                 }
-            });
+
+                schoolForm.addEventListener('submit', (event) => {
+                    event.preventDefault();
+                    const schoolProfile = Object.fromEntries(schoolFields.map((field) => [field, schoolForm.elements[field].value.trim()]));
+
+                    try {
+                        localStorage.setItem(prefix + 'school-profile', JSON.stringify(schoolProfile));
+                        schoolStatus.textContent = 'School profile saved on this device.';
+                    } catch (error) {
+                        schoolStatus.textContent = 'Could not save in this browser.';
+                    }
+                });
+            }
 
             document.querySelectorAll('[data-preference]').forEach((input) => {
                 const key = prefix + input.dataset.preference;

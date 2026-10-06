@@ -5,7 +5,12 @@
 @section('heading', $task->title)
 @section('subtitle', $task->course ?: 'Uncategorized')
 @section('page-action')
-    <a class="button secondary" href="{{ route('tasks.edit', $task) }}">Edit task</a>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        @if ($task->canvas_url)
+            <a class="button secondary" href="{{ $task->canvas_url }}" target="_blank" rel="noopener noreferrer">Open in Canvas</a>
+        @endif
+        <a class="button secondary" href="{{ route('tasks.edit', $task) }}">Edit task</a>
+    </div>
 @endsection
 
 @section('content')
@@ -62,6 +67,26 @@
                     <div class="assistant-answer" aria-live="polite"><strong>You asked:</strong> {{ session('assistant_question') }}<br><br>{{ session('assistant_answer') }}</div>
                 @endif
             </section>
+            @if ($task->source === 'canvas' && $task->canvas_course_id && $task->canvas_assignment_id)
+                <section class="panel" style="margin-bottom:14px;">
+                    <p class="eyebrow">Canvas submission</p>
+                    <h2>Send an answer to Canvas</h2>
+                    <p class="detail-description">This works for assignments that accept online text-entry submissions. The AI option submits its generated response immediately.</p>
+                    @if (session('canvas_submit_error'))<p class="assistant-error" role="alert">{{ session('canvas_submit_error') }}</p>@endif
+                    @if (session('canvas_ai_answer'))<div class="assistant-answer" aria-live="polite"><strong>AI answer submitted to Canvas:</strong><br><br>{{ session('canvas_ai_answer') }}</div>@endif
+                    <form class="assistant-form" method="POST" action="{{ route('tasks.canvas-submit', $task) }}">
+                        @csrf
+                        <label class="muted" for="canvas-answer" style="font-size:11px;">Your written answer</label>
+                        <textarea id="canvas-answer" name="answer" maxlength="100000" required>{{ old('answer') }}</textarea>
+                        @error('answer')<span class="assistant-error">{{ $message }}</span>@enderror
+                        <button class="button small" type="submit">Submit written answer</button>
+                    </form>
+                    <form class="assistant-form" method="POST" action="{{ route('tasks.canvas-ai-submit', $task) }}">
+                        @csrf
+                        <button class="button secondary small" type="submit">Generate with AI and submit to Canvas</button>
+                    </form>
+                </section>
+            @endif
             <section class="panel">
                 <p class="eyebrow">AI risk explanation</p>
                 <h2>Why this level?</h2>
@@ -69,6 +94,12 @@
                 <p class="eyebrow" style="margin-top:19px;">Recommended action</p>
                 <p class="detail-description">{{ $assessment['recommendation'] }}</p>
                 @if ($assessment['overdue'])<p class="risk-badge high" style="margin:0;">Overdue · {{ abs($assessment['days_remaining']) }} {{ abs($assessment['days_remaining']) === 1 ? 'day' : 'days' }}</p>@endif
+                <form class="assistant-form" method="POST" action="{{ route('tasks.gemini-risk', $task) }}">
+                    @csrf
+                    <button class="button secondary small" type="submit">Get Gemini analysis</button>
+                </form>
+                @if (session('gemini_error'))<p class="assistant-error" role="alert">{{ session('gemini_error') }}</p>@endif
+                @if (session('gemini_analysis'))<div class="assistant-answer" aria-live="polite"><strong>Gemini analysis</strong><br><br>{{ session('gemini_analysis') }}</div>@endif
             </section>
 
             <section class="panel" style="margin-top:14px;">
