@@ -73,6 +73,29 @@ class AuthFlowTest extends TestCase
         Mail::assertSent(LoginOtpMail::class, fn (LoginOtpMail $mail): bool => $mail->hasTo($user->email));
     }
 
+    public function test_login_redirects_to_dashboard_when_canvas_is_not_connected(): void
+    {
+        Mail::fake();
+        $user = User::factory()->create();
+
+        $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])->assertRedirect(route('login.otp'));
+
+        $code = null;
+        Mail::assertQueued(LoginOtpMail::class, function (LoginOtpMail $mail) use (&$code): bool {
+            $code = $mail->code;
+
+            return true;
+        });
+
+        $this->post(route('login.otp.verify'), ['code' => $code])
+            ->assertRedirect('/dashboard');
+
+        $this->assertAuthenticatedAs($user);
+    }
+
     public function test_legacy_plaintext_password_is_hashed_after_successful_login(): void
     {
         Mail::fake();

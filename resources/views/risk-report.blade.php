@@ -13,6 +13,9 @@
         .report-metric strong { display: block; margin-top: 8px; font-family: 'Raleway', sans-serif; font-size: 25px; }
         .report-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
         .distribution { display: grid; gap: 14px; }
+        .exposure { display: grid; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--panel-line); }
+        .exposure strong { display: flex; flex-direction: column; gap: 2px; }
+        .report-metric strong::before { display: block; width: 34px; height: 2px; margin-bottom: 8px; background: var(--panel-line); content: ''; }
         .distribution-row { display: grid; grid-template-columns: 95px minmax(0, 1fr) 28px; align-items: center; gap: 10px; color: #cadbd7; font-size: 11px; }
         .distribution-row strong { text-align: right; }
         .distribution-track { height: 9px; overflow: hidden; border-radius: 5px; background: rgba(255,255,255,.09); }
@@ -34,7 +37,7 @@
 
     <section class="report-metrics" aria-label="Risk totals">
         <article class="report-metric"><span>High risk</span><strong style="color:#ff9b96;">{{ $summary['counts']['high'] }}</strong></article>
-        <article class="report-metric"><span>Medium risk</span><strong style="color:#ffc476;">{{ $summary['counts']['medium'] }}</strong></article>
+        <article class="report-metric"><span>Moderate risk</span><strong style="color:#ffc476;">{{ $summary['counts']['medium'] }}</strong></article>
         <article class="report-metric"><span>Low risk</span><strong style="color:#a9dfb4;">{{ $summary['counts']['low'] }}</strong></article>
         <article class="report-metric"><span>Overdue</span><strong style="color:#ff9b96;">{{ $summary['counts']['overdue'] }}</strong></article>
     </section>
@@ -43,7 +46,7 @@
         <section class="panel">
             <div class="panel-heading"><div><h2>Risk distribution</h2><p>Current open tasks grouped by calculated risk</p></div></div>
             <div class="distribution">
-                @foreach (['high' => 'High risk', 'medium' => 'Medium risk', 'low' => 'Low risk'] as $level => $label)
+                @foreach (['high' => 'High risk', 'medium' => 'Moderate risk', 'low' => 'Low risk'] as $level => $label)
                     @php $width = $summary['counts']['open'] === 0 ? 0 : (int) round(($summary['counts'][$level] / $summary['counts']['open']) * 100); @endphp
                     <div class="distribution-row"><span>{{ $label }}</span><div class="distribution-track"><span class="{{ $level }}" style="width:{{ $width }}%"></span></div><strong>{{ $summary['counts'][$level] }}</strong></div>
                 @endforeach

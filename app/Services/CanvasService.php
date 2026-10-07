@@ -17,14 +17,14 @@ class CanvasService
 
     private string $clientSecret;
 
-    private string $localApiKey;
+    private string $apiKey;
 
     public function __construct()
     {
         $this->baseUrl = rtrim((string) config('services.canvas.url'), '/');
         $this->clientId = (string) config('services.canvas.client_id');
         $this->clientSecret = (string) config('services.canvas.client_secret');
-        $this->localApiKey = (string) config('services.canvas.api_key');
+        $this->apiKey = (string) config('services.canvas.api_key');
     }
 
     public function authorizationUrl(string $redirectUri, string $state): string
@@ -171,8 +171,8 @@ class CanvasService
         $accessToken = $user->canvas_access_token;
 
         if (! filled($accessToken)) {
-            if (app()->environment('local') && filled($this->localApiKey)) {
-                return $this->apiClient($this->localApiKey);
+            if (filled($this->apiKey)) {
+                return $this->apiClient($this->apiKey);
             }
 
             throw new RuntimeException('Connect your Canvas account before syncing.');
@@ -315,8 +315,18 @@ class CanvasService
     {
         $this->ensureCanvasUrlConfigured();
 
-        if ($this->clientId === '' || $this->clientSecret === '') {
-            throw new RuntimeException('Canvas OAuth is not configured. Set CANVAS_URL, CANVAS_CLIENT_ID, and CANVAS_CLIENT_SECRET.');
+        $missingConfiguration = [];
+
+        if ($this->clientId === '') {
+            $missingConfiguration[] = 'CANVAS_CLIENT_ID';
+        }
+
+        if ($this->clientSecret === '') {
+            $missingConfiguration[] = 'CANVAS_CLIENT_SECRET';
+        }
+
+        if ($missingConfiguration !== []) {
+            throw new RuntimeException('Canvas OAuth is not configured. Set '.implode(' and ', $missingConfiguration).'.');
         }
     }
 

@@ -1,15 +1,16 @@
 @extends('layouts.risk')
 
 @section('title', 'Overview')
-@section('eyebrow', 'Your study plan · '.now()->format('l, M j'))
+@section('eyebrow', 'Today · '.now()->format('l, M j'))
 @section('heading', (now()->hour < 12 ? 'Good morning' : (now()->hour < 18 ? 'Good afternoon' : 'Good evening')).', '.auth()->user()->name)
-@section('subtitle', 'Your deadlines, risk signals, and next best steps.')
+@section('subtitle', 'A clear view of what’s due and what needs a little attention.')
 @section('page-action')
-    <button class="button" type="button" data-open-task>＋ Add task</button>
 @endsection
 
 @section('content')
     <style>
+        .quick-actions, .copilot-panel { display: none !important; }
+        .support-grid > #settings { display: none !important; }
         .welcome-strip { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:15px; padding:13px 16px; border:1px solid var(--panel-line); border-radius:7px; background:#0d3031; }
         .welcome-summary { display:flex; align-items:center; gap:11px; min-width:0; }
         .welcome-spark { display:grid; width:32px; height:32px; flex:0 0 32px; place-items:center; border-radius:8px; background:rgba(167,139,250,.15); color:var(--purple); font-size:17px; }
@@ -126,9 +127,25 @@
     </style>
 
     <section class="welcome-strip" aria-label="Today's summary">
-        <div class="welcome-summary"><span class="welcome-spark" aria-hidden="true">✦</span><p><small>AI study brief · {{ now()->format('l, M j') }}</small>{{ $productivitySummary }}</p></div>
+        <div class="welcome-summary"><span class="welcome-spark" aria-hidden="true">•</span><p><small>Your plan · {{ now()->format('l, M j') }}</small>{{ $productivitySummary }}</p></div>
         <div class="due-today-stat"><strong>{{ $dueTodayCount }}</strong><span>{{ Str::plural('task', $dueTodayCount) }} due today</span></div>
     </section>
+
+    <div class="secondary-grid">
+        <section class="panel risk-panel" aria-labelledby="risk-overview-title">
+            <div class="panel-heading"><div><p class="eyebrow" style="color:var(--purple);">Analytics</p><h2 id="risk-overview-title">Deadline risk</h2><p>Start here to see upcoming deadline pressure.</p></div><a class="text-button" href="{{ route('risk-report') }}">Risk report →</a></div>
+            <div class="risk-metrics"><div class="risk-metric low"><span>Low risk</span><strong>{{ $summary['counts']['low'] }}</strong></div><div class="risk-metric medium"><span>Medium risk</span><strong>{{ $summary['counts']['medium'] }}</strong></div><div class="risk-metric high"><span>High risk</span><strong>{{ $summary['counts']['high'] }}</strong></div><div class="risk-metric overdue"><span>Overdue</span><strong>{{ $summary['counts']['overdue'] }}</strong></div></div>
+            <div class="panel-heading" style="margin-bottom:5px;"><div><h2 style="font-size:12px;">Deadline activity</h2><p>Risk by day · next 7 days</p></div><span class="muted" style="font-size:10px;">{{ $activity->first()['date']->format('M j') }} – {{ $activity->last()['date']->format('M j') }}</span></div>
+            <div class="activity-chart" role="img" aria-label="Deadline distribution for the next seven days">@foreach ($activity as $day)@php $barHeight = $day['total'] === 0 ? 3 : max(9, (int) round(($day['total'] / $chartMax) * 84)); @endphp<div class="activity-day" title="{{ $day['date']->format('F j') }}: {{ $day['total'] }} assignment(s)"><span class="day-count">{{ $day['total'] ?: '' }}</span><div class="chart-plot"><div class="chart-bar" style="height:{{ $barHeight }}px;">@foreach (['completed', 'low', 'medium', 'high'] as $level)@if ($day['levels'][$level] > 0)<span class="chart-segment {{ $level }}" style="flex:{{ $day['levels'][$level] }}"></span>@endif @endforeach</div></div><span class="day-label">{{ $day['label'] }}</span></div>@endforeach</div>
+            <div class="risk-legend"><span class="legend-item"><i class="legend-dot"></i>High</span><span class="legend-item"><i class="legend-dot medium"></i>Medium</span><span class="legend-item"><i class="legend-dot low"></i>Low</span><span class="legend-item"><i class="legend-dot completed"></i>Completed</span></div>
+        </section>
+
+        <section class="panel course-panel" id="course-progress" aria-labelledby="course-progress-title">
+            <div class="panel-heading"><div><p class="eyebrow" style="color:var(--blue);">Academic overview</p><h2 id="course-progress-title">Course progress</h2><p>Completion across task categories.</p></div></div>
+            @if ($courseProgress->isNotEmpty())<div class="course-list">@foreach ($courseProgress->take(5) as $course)<div class="course-row"><div class="course-meta"><span>{{ $course['name'] }}</span><small>{{ $course['completed'] }}/{{ $course['count'] }} complete</small></div>@if ($course['professor'] || $course['grade'] !== null)<div class="course-meta"><small>{{ $course['professor'] ? 'Prof. '.$course['professor'] : 'Professor not set' }}</small><small>{{ $course['grade'] !== null ? 'Current grade · '.number_format($course['grade'], 1).'%' : 'No grades yet' }}</small></div>@endif<div class="course-track"><span style="width:{{ $course['progress'] }}%"></span></div><div class="course-meta"><small>{{ $course['count'] }} {{ Str::plural('assignment', $course['count']) }}</small><small>{{ $course['progress'] }}% task completion</small></div></div>@endforeach</div>@else<div class="empty-task">Add a course name when creating a task to track progress here.</div>@endif
+            <a class="text-button" href="{{ route('courses.index') }}">Manage courses, professors &amp; grades →</a>
+        </section>
+    </div>
 
     <section class="work-grid" aria-label="Priority tasks and upcoming deadlines">
         <article class="panel priority-panel" aria-labelledby="today-tasks-title">
@@ -162,39 +179,25 @@
 
     <section class="ai-alert" aria-labelledby="risk-alert-title">
         <span class="ai-alert-icon" aria-hidden="true">✦</span>
-        <div class="ai-alert-copy"><h2 id="risk-alert-title">AI Risk Alert</h2><p>AI detected {{ $attentionAlerts->count() }} {{ Str::plural('assignment', $attentionAlerts->count()) }} that may need attention.</p>
-            @if ($attentionAlerts->isNotEmpty())<div class="alert-list">@foreach ($attentionAlerts->take(3) as $alert)<div class="alert-row"><span>{{ $alert['task']->title }}</span><span class="alert-reasons">@foreach ($alert['reasons'] as $reason)<span class="alert-reason">{{ $reason }}</span>@endforeach</span></div>@endforeach</div>@else<span class="alert-reason">No high-pressure patterns right now</span>@endif
+        <div class="ai-alert-copy"><h2 id="risk-alert-title">Worth a look</h2><p>{{ $attentionAlerts->count() }} {{ Str::plural('assignment', $attentionAlerts->count()) }} match your attention rules.</p>
+            @if ($attentionAlerts->isNotEmpty())<div class="alert-list">@foreach ($attentionAlerts->take(3) as $alert)<div class="alert-row"><span>{{ $alert['task']->title }}</span><span class="alert-reasons">@foreach ($alert['reasons'] as $reason)<span class="alert-reason">{{ $reason }}</span>@endforeach</span></div>@endforeach</div>@else<span class="alert-reason">Nothing needs attention right now</span>@endif
         </div>
         @if ($focusTasks->isNotEmpty())<a class="button secondary small" href="{{ route('tasks.show', $focusTasks->first()) }}">Review priority →</a>@endif
     </section>
 
     <section class="panel copilot-panel" aria-labelledby="copilot-title">
-        <div><div class="copilot-heading"><span class="copilot-mark" aria-hidden="true">✦</span><h2 id="copilot-title">AI Copilot</h2><span class="status-badge low">Task-aware</span></div><p class="copilot-response" id="copilot-response" role="status">Ask about your workload. I’ll use your deadlines, progress, and risk levels to suggest a next step.</p><div class="copilot-prompts" aria-label="Suggested Copilot questions"><button class="copilot-prompt" type="button" data-copilot-prompt="What should I work on next?">What next?</button><button class="copilot-prompt" type="button" data-copilot-prompt="Why is a task high risk?">Explain my risk</button><button class="copilot-prompt" type="button" data-copilot-prompt="How can I catch up this week?">Help me catch up</button></div></div>
-        <form class="copilot-form" id="copilot-form"><input id="copilot-question" type="text" placeholder="Ask your study copilot..." aria-label="Ask your study copilot"><button class="copilot-send" type="submit" aria-label="Ask Copilot">→</button></form>
+        <div><div class="copilot-heading"><span class="copilot-mark" aria-hidden="true">?</span><h2 id="copilot-title">Quick planning help</h2><span class="status-badge low">Uses your tasks</span></div><p class="copilot-response" id="copilot-response" role="status">Ask a question about your workload. Suggestions use your due dates, progress, and task priority.</p><div class="copilot-prompts" aria-label="Suggested planning questions"><button class="copilot-prompt" type="button" data-copilot-prompt="What should I work on next?">What next?</button><button class="copilot-prompt" type="button" data-copilot-prompt="Why is a task high risk?">Explain my risk</button><button class="copilot-prompt" type="button" data-copilot-prompt="How can I catch up this week?">Help me catch up</button></div></div>
+        <form class="copilot-form" id="copilot-form"><input id="copilot-question" type="text" placeholder="Ask about your tasks..." aria-label="Ask about your tasks"><button class="copilot-send" type="submit" aria-label="Get planning suggestion">→</button></form>
     </section>
 
-    <div class="secondary-grid">
-        <section class="panel risk-panel" aria-labelledby="risk-overview-title">
-            <div class="panel-heading"><div><p class="eyebrow" style="color:var(--purple);">Analytics · secondary</p><h2 id="risk-overview-title">Deadline risk</h2><p>Understand the pressure without decoding a chart.</p></div><a class="text-button" href="{{ route('risk-report') }}">Risk report →</a></div>
-            <div class="risk-metrics"><div class="risk-metric low"><span>Low risk</span><strong>{{ $summary['counts']['low'] }}</strong></div><div class="risk-metric medium"><span>Medium risk</span><strong>{{ $summary['counts']['medium'] }}</strong></div><div class="risk-metric high"><span>High risk</span><strong>{{ $summary['counts']['high'] }}</strong></div><div class="risk-metric overdue"><span>Overdue</span><strong>{{ $summary['counts']['overdue'] }}</strong></div></div>
-            <div class="panel-heading" style="margin-bottom:5px;"><div><h2 style="font-size:12px;">Deadline activity</h2><p>Risk by day · next 7 days</p></div><span class="muted" style="font-size:10px;">{{ $activity->first()['date']->format('M j') }} – {{ $activity->last()['date']->format('M j') }}</span></div>
-            <div class="activity-chart" role="img" aria-label="Deadline distribution for the next seven days">@foreach ($activity as $day)@php $barHeight = $day['total'] === 0 ? 3 : max(9, (int) round(($day['total'] / $chartMax) * 84)); @endphp<div class="activity-day" title="{{ $day['date']->format('F j') }}: {{ $day['total'] }} assignment(s)"><span class="day-count">{{ $day['total'] ?: '' }}</span><div class="chart-plot"><div class="chart-bar" style="height:{{ $barHeight }}px;">@foreach (['completed', 'low', 'medium', 'high'] as $level)@if ($day['levels'][$level] > 0)<span class="chart-segment {{ $level }}" style="flex:{{ $day['levels'][$level] }}"></span>@endif @endforeach</div></div><span class="day-label">{{ $day['label'] }}</span></div>@endforeach</div>
-            <div class="risk-legend"><span class="legend-item"><i class="legend-dot"></i>High</span><span class="legend-item"><i class="legend-dot medium"></i>Medium</span><span class="legend-item"><i class="legend-dot low"></i>Low</span><span class="legend-item"><i class="legend-dot completed"></i>Completed</span></div>
-        </section>
 
-        <section class="panel course-panel" id="course-progress" aria-labelledby="course-progress-title">
-            <div class="panel-heading"><div><p class="eyebrow" style="color:var(--blue);">Academic overview</p><h2 id="course-progress-title">Course progress</h2><p>Completion across task categories.</p></div></div>
-            @if ($courseProgress->isNotEmpty())<div class="course-list">@foreach ($courseProgress->take(5) as $course)<div class="course-row"><div class="course-meta"><span>{{ $course['name'] }}</span><small>{{ $course['completed'] }}/{{ $course['count'] }} complete</small></div>@if ($course['professor'] || $course['grade'] !== null)<div class="course-meta"><small>{{ $course['professor'] ? 'Prof. '.$course['professor'] : 'Professor not set' }}</small><small>{{ $course['grade'] !== null ? 'Current grade · '.number_format($course['grade'], 1).'%' : 'No grades yet' }}</small></div>@endif<div class="course-track"><span style="width:{{ $course['progress'] }}%"></span></div><div class="course-meta"><small>{{ $course['count'] }} {{ Str::plural('assignment', $course['count']) }}</small><small>{{ $course['progress'] }}% task completion</small></div></div>@endforeach</div>@else<div class="empty-task">Add a course name when creating a task to track progress here.</div>@endif
-            <a class="text-button" href="{{ route('courses.index') }}">Manage courses, professors &amp; grades →</a>
-        </section>
-    </div>
 
     <section class="quick-actions" aria-label="Quick actions"><button class="quick-action" type="button" data-open-task><span class="quick-action-icon" aria-hidden="true">＋</span>Add task</button><a class="quick-action course" href="{{ route('courses.index') }}#new-course"><span class="quick-action-icon" aria-hidden="true">▤</span>Add course</a><a class="quick-action calendar" href="{{ route('calendar') }}"><span class="quick-action-icon" aria-hidden="true">▦</span>View calendar</a><a class="quick-action report" href="{{ route('risk-report') }}"><span class="quick-action-icon" aria-hidden="true">⌁</span>Check risk report</a></section>
 
     <div class="support-grid">
         <section class="panel" id="settings" aria-labelledby="dashboard-settings-title"><h2 id="dashboard-settings-title">Settings</h2><p>Personalize this dashboard on this device.</p><label class="support-setting"><input type="checkbox" data-setting="compact"> Compact task rows</label><label class="support-setting"><input type="checkbox" data-setting="risk"> Soften risk colors</label></section>
-        <section class="panel" id="help" aria-labelledby="dashboard-help-title"><h2 id="dashboard-help-title">Help</h2><p>Risk combines deadline proximity, unfinished progress, remaining effort, priority, and overdue status. Use the risk report for the full breakdown.</p><a class="text-button" href="{{ route('risk-report') }}">Open risk report →</a></section>
-        <section class="panel" id="feedback" aria-labelledby="dashboard-feedback-title"><h2 id="dashboard-feedback-title">Feedback</h2><p>Save a note about your planning experience in this browser.</p><form class="feedback-form" id="feedback-form"><textarea maxlength="1200" placeholder="What would make planning easier?" required></textarea><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;"><span class="feedback-status" id="feedback-status" role="status"></span><button class="button small" type="submit">Save note</button></div></form></section>
+        <section class="panel" id="help" aria-labelledby="dashboard-help-title"><h2 id="dashboard-help-title">Help</h2><p>TANGINAMO, PURO KA HINGI TULONG. GUSTO TULONG AI AFTER LARO, ARAL AYAW?</p></section>
+        <section class="panel" id="feedback" aria-labelledby="dashboard-feedback-title"><h2 id="dashboard-feedback-title">Feedback</h2><p>Send a note to the Deadline Risk team.</p><form class="feedback-form" method="POST" action="{{ route('feedback.store') }}">@csrf<textarea name="message" maxlength="1200" placeholder="What would make planning easier?" required></textarea><div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;"><button class="button small" type="submit">Send feedback</button></div></form></section>
     </div>
 
     <dialog class="task-dialog" id="task-dialog" aria-labelledby="dialog-title">

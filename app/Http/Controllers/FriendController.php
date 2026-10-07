@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FriendMessage;
 use App\Models\FriendRequest as FriendRequestModel;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -14,6 +15,7 @@ class FriendController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
+        $user->forceFill(['last_seen_at' => now()])->save();
         $requests = FriendRequestModel::query()
             ->with(['sender', 'receiver'])
             ->where(fn ($query) => $query
@@ -28,10 +30,45 @@ class FriendController extends Controller
                 : $friendRequest->sender)
             ->values();
 
+        $friendIds = $friends->pluck('id');
+        $messages = FriendMessage::query()
+            ->where(fn ($query) => $query->where('sender_id', $user->id)->whereIn('receiver_id', $friendIds))
+            ->orWhere(fn ($query) => $query->where('receiver_id', $user->id)->whereIn('sender_id', $friendIds))
+            ->orderBy('created_at')
+            ->get()
+            ->groupBy(fn (FriendMessage $message): int => $message->sender_id === $user->id ? $message->receiver_id : $message->sender_id);
+
+        $friends->each(function (User $friend) use ($messages): void {
+            $friend->setAttribute('online', $friend->last_seen_at?->greaterThan(now()->subMinutes(5)) ?? false);
+            $friend->setAttribute('chat_messages', $messages->get($friend->id, collect()));
+        });
+
+        $friendSearch = trim($request->string('q')->toString());
+        $discoverableUsers = collect();
+
+        if (mb_strlen($friendSearch) >= 2) {
+            $searchPattern = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $friendSearch).'%';
+
+            $discoverableUsers = User::query()
+                ->where('id', '!=', $user->id)
+                ->where(function ($query) use ($searchPattern): void {
+                    $query->where('name', 'like', $searchPattern)
+                        ->orWhere('nickname', 'like', $searchPattern)
+                        ->orWhere('email', 'like', $searchPattern);
+                })
+                ->whereDoesntHave('sentFriendRequests', fn ($query) => $query->whereIn('status', ['accepted', 'pending']))
+                ->whereDoesntHave('receivedFriendRequests', fn ($query) => $query->whereIn('status', ['accepted', 'pending']))
+                ->orderBy('name')
+                ->limit(20)
+                ->get();
+        }
+
         return view('friends.index', [
             'friends' => $friends,
             'incomingRequests' => $requests->where('status', 'pending')->where('receiver_id', $user->id)->values(),
             'outgoingRequests' => $requests->where('status', 'pending')->where('sender_id', $user->id)->values(),
+            'friendSearch' => $friendSearch,
+            'discoverableUsers' => $discoverableUsers,
         ]);
     }
 

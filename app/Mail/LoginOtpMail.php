@@ -21,7 +21,7 @@ class LoginOtpMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your Deadline Risk AI verification code',
+            subject: 'Your Deadline Risk verification code',
         );
     }
 

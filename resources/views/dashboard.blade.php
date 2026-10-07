@@ -56,7 +56,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Deadline Risk AI</title>
+    <title>Deadline Risk</title>
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
         @vite(['resources/sass/app.scss', 'resources/js/app.js'])
     @endif
@@ -173,7 +173,7 @@
             </header>
 
             <div id="overview">
-                <p class="eyebrow">Deadline Risk AI / Overview</p>
+                <p class="eyebrow">Deadline Risk / Overview</p>
                 <h1 class="dashboard-title">Your Analytical Board</h1>
             </div>
 

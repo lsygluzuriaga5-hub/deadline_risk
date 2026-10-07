@@ -7,7 +7,7 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Deadline Risk AI</title>
+    <title>Deadline Risk</title>
 
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
@@ -104,7 +104,7 @@
     <div id="app">
         <header class="auth-header">
             <nav class="auth-nav" aria-label="Main navigation">
-                <img src="{{ asset('images/logo.jpg') }}" alt="Deadline Risk AI Logo" class="auth-brand-mark" /> <span>Deadline Risk AI</span>
+                <img src="{{ asset('images/logo.jpg') }}" alt="Deadline Risk logo" class="auth-brand-mark" /> <span>Deadline Risk</span>
                 <ul class="auth-links">
                     <li><button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to light mode" aria-pressed="false" title="Switch to light mode">☀</button></li>
                     @guest

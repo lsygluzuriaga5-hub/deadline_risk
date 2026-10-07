@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use App\Models\Task;
+use App\Models\User;
 use App\Services\CanvasService;
 use App\Services\GeminiService;
 use App\Services\TaskRiskAssessment;
@@ -52,8 +53,11 @@ class CanvasController extends Controller
         }
     }
 
-    public function callback(Request $request, CanvasService $canvas): RedirectResponse
-    {
+    public function callback(
+        Request $request,
+        CanvasService $canvas,
+        TaskRiskAssessment $riskAssessment
+    ): RedirectResponse {
         $expectedState = $request->session()->pull('canvas_oauth_state');
         $receivedState = (string) $request->query('state', '');
 
@@ -78,8 +82,20 @@ class CanvasController extends Controller
                 $this->redirectUri()
             );
 
-            return redirect()->route('settings.index', 'canvas')
-                ->with('success', 'Canvas account connected successfully.');
+            try {
+                ['created' => $created, 'updated' => $updated] = $this->syncAssignments(
+                    $request->user(),
+                    $canvas,
+                    $riskAssessment
+                );
+            } catch (RuntimeException $exception) {
+                return redirect()->route('settings.index', 'canvas')
+                    ->with('success', 'Canvas account connected successfully.')
+                    ->with('error', 'Canvas connected, but assignments could not be synced yet: '.$exception->getMessage());
+            }
+
+            return redirect()->route('tasks.index')
+                ->with('success', "Canvas connected and synced. {$created} new task(s), {$updated} updated task(s).");
         } catch (RuntimeException $exception) {
             return redirect()->route('settings.index', 'canvas')
                 ->with('error', $exception->getMessage());
@@ -160,93 +176,12 @@ class CanvasController extends Controller
         CanvasService $canvas,
         TaskRiskAssessment $riskAssessment
     ): RedirectResponse {
-        $user = $request->user();
-
         try {
-            $courses = $canvas->getCourses($user);
-
-            $created = 0;
-            $updated = 0;
-            foreach ($courses as $canvasCourse) {
-                if (empty($canvasCourse['id'])) {
-                    continue;
-                }
-
-                $canvasCourseId = (string) $canvasCourse['id'];
-                $courseName = trim(
-                    (string) ($canvasCourse['name'] ?? 'Unnamed Course')
-                );
-
-                $course = Course::firstOrCreate(
-                    [
-                        'user_id' => $user->id,
-                        'name' => $courseName,
-                    ],
-                    [
-                        'professor' => null,
-                        'grading_components' => null,
-                    ]
-                );
-
-                $assignments = $canvas->getAssignments(
-                    $user,
-                    $canvasCourse['id']
-                );
-
-                foreach ($assignments as $assignment) {
-                    if (empty($assignment['id']) || empty($assignment['name'])) {
-                        continue;
-                    }
-
-                    $dueAt = filled($assignment['due_at'] ?? null)
-                        ? Carbon::parse($assignment['due_at'])
-                        : null;
-
-                    $existingTask = Task::where('user_id', $user->id)
-                        ->where(
-                            'canvas_assignment_id',
-                            (string) $assignment['id']
-                        )
-                        ->first();
-
-                    $taskData = [
-                        'user_id' => $user->id,
-                        'course_id' => $course->id,
-                        'title' => $assignment['name'],
-                        'description' => $this->cleanDescription(
-                            $assignment['description'] ?? null
-                        ),
-                        'deadline' => $dueAt?->toDateString(),
-                        'status' => $existingTask?->status ?? 'pending',
-                        'progress' => $existingTask?->progress ?? 0,
-                        'estimated_hours' => $existingTask?->estimated_hours,
-                        'priority' => $existingTask?->priority ?? 'normal',
-                        'course' => $courseName,
-                        'source' => 'canvas',
-                        'canvas_assignment_id' => (string) $assignment['id'],
-                        'canvas_course_id' => $canvasCourseId,
-                        'canvas_due_at' => $dueAt,
-                        'canvas_url' => $assignment['html_url'] ?? null,
-                    ];
-
-                    $task = Task::updateOrCreate(
-                        [
-                            'user_id' => $user->id,
-                            'canvas_assignment_id' => (string) $assignment['id'],
-                        ],
-                        $taskData
-                    );
-
-                    $task->risk_level = $riskAssessment->assess($task)['level'];
-                    $task->save();
-
-                    if ($existingTask) {
-                        $updated++;
-                    } else {
-                        $created++;
-                    }
-                }
-            }
+            ['created' => $created, 'updated' => $updated] = $this->syncAssignments(
+                $request->user(),
+                $canvas,
+                $riskAssessment
+            );
 
             return redirect()
                 ->route('tasks.index')
@@ -262,6 +197,78 @@ class CanvasController extends Controller
                     'Canvas sync failed: '.$exception->getMessage()
                 );
         }
+    }
+
+    /**
+     * @return array{created: int, updated: int}
+     */
+    private function syncAssignments(
+        User $user,
+        CanvasService $canvas,
+        TaskRiskAssessment $riskAssessment
+    ): array {
+        $created = 0;
+        $updated = 0;
+
+        foreach ($canvas->getCourses($user) as $canvasCourse) {
+            if (empty($canvasCourse['id'])) {
+                continue;
+            }
+
+            $canvasCourseId = (string) $canvasCourse['id'];
+            $courseName = trim((string) ($canvasCourse['name'] ?? 'Unnamed Course'));
+            $course = Course::firstOrCreate(
+                ['user_id' => $user->id, 'name' => $courseName],
+                ['professor' => null, 'grading_components' => null]
+            );
+
+            foreach ($canvas->getAssignments($user, $canvasCourse['id']) as $assignment) {
+                if (empty($assignment['id']) || empty($assignment['name'])) {
+                    continue;
+                }
+
+                $assignmentId = (string) $assignment['id'];
+                $dueAt = filled($assignment['due_at'] ?? null)
+                    ? Carbon::parse($assignment['due_at'])
+                    : null;
+                $existingTask = Task::query()
+                    ->where('user_id', $user->id)
+                    ->where('canvas_assignment_id', $assignmentId)
+                    ->first();
+
+                $task = Task::updateOrCreate(
+                    ['user_id' => $user->id, 'canvas_assignment_id' => $assignmentId],
+                    [
+                        'user_id' => $user->id,
+                        'course_id' => $course->id,
+                        'title' => $assignment['name'],
+                        'description' => $this->cleanDescription($assignment['description'] ?? null),
+                        'deadline' => $dueAt?->toDateString(),
+                        'status' => $existingTask?->status ?? 'pending',
+                        'progress' => $existingTask?->progress ?? 0,
+                        'estimated_hours' => $existingTask?->estimated_hours,
+                        'priority' => $existingTask?->priority ?? 'normal',
+                        'course' => $courseName,
+                        'source' => 'canvas',
+                        'canvas_assignment_id' => $assignmentId,
+                        'canvas_course_id' => $canvasCourseId,
+                        'canvas_due_at' => $dueAt,
+                        'canvas_url' => $assignment['html_url'] ?? null,
+                    ]
+                );
+
+                $task->risk_level = $riskAssessment->assess($task)['level'];
+                $task->save();
+
+                if ($existingTask) {
+                    $updated++;
+                } else {
+                    $created++;
+                }
+            }
+        }
+
+        return ['created' => $created, 'updated' => $updated];
     }
 
     private function cleanDescription(?string $description): ?string

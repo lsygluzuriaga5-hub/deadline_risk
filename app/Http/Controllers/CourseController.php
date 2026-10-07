@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
+use App\Services\CanvasService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -19,6 +20,25 @@ class CourseController extends Controller
             'courses' => $courses,
             'notifications' => [],
         ]);
+    }
+
+    public function syncFromCanvas(Request $request, CanvasService $canvas): RedirectResponse
+    {
+        $imported = 0;
+
+        foreach ($canvas->getCourses($request->user()) as $canvasCourse) {
+            $name = trim((string) ($canvasCourse['name'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+
+            $teachers = collect($canvasCourse['teachers'] ?? [])->pluck('display_name')->filter()->implode(', ');
+            $course = $request->user()->courses()->firstOrCreate(['name' => $name], ['professor' => $teachers ?: null]);
+            $this->linkMatchingTasks($request, $course);
+            $imported++;
+        }
+
+        return redirect()->route('courses.index')->with('success', $imported.' Canvas courses checked and linked.');
     }
 
     public function store(Request $request): RedirectResponse

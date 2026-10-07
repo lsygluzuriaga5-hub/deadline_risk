@@ -113,11 +113,7 @@ class AuthController extends Controller
         $request->session()->forget('auth_otp');
         $request->session()->regenerate();
 
-        $destination = filled($user->canvas_access_token)
-            ? route('dashboard')
-            : route('settings.index', 'canvas');
-
-        return redirect()->intended($destination);
+        return redirect()->intended(route('dashboard'));
     }
 
     public function resendOtp(Request $request): RedirectResponse

@@ -91,7 +91,8 @@
 
         <section class="course-create" id="new-course" aria-labelledby="new-course-title">
             <h2 id="new-course-title">Add a course</h2>
-            <p>Create a course profile with its professor and grading breakdown.</p>
+            <p>Import your Canvas courses and professor details, or create a course manually.</p>
+            <form method="POST" action="{{ route('courses.canvas-sync') }}" style="margin-bottom:14px;">@csrf<button class="button secondary" type="submit">Import from Canvas</button></form>
             <form method="POST" action="{{ route('courses.store') }}" data-course-form>
                 @csrf
                 <div class="course-fields">

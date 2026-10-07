@@ -1,6 +1,6 @@
 <p>Hello,</p>
 
-<p>Use this verification code to finish signing in to Deadline Risk AI:</p>
+<p>Use this verification code to finish signing in to Deadline Risk:</p>
 
 <p></p>
 

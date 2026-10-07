@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "deadline-risk/deadline-risk",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "A student planner for assignments, deadlines, and course progress.",
+    "keywords": ["student-planner", "deadlines", "laravel"],
     "license": "MIT",
     "require": {
         "php": "^8.3",

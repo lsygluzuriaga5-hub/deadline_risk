@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
@@ -59,7 +59,7 @@
         .app-shell { display: grid; grid-template-columns: 236px minmax(0, 1fr); min-height: 100vh; transition: grid-template-columns .22s ease; }
         .sidebar { position: sticky; top: 0; display: flex; flex-direction: column; min-height: 100vh; height: 100vh; padding: 24px 16px 18px; background: var(--sidebar); border-right: 1px solid var(--panel-line); }
         .brand { display: flex; align-items: center; gap: 11px; margin: 0 0 35px 4px; color: var(--text); text-decoration: none; font-family: 'Raleway', sans-serif; font-size: 16px; font-weight: 800; white-space: nowrap; }
-        .brand-mark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 9px; background: var(--teal); color: #062426; font-size: 18px; }
+        .brand-mark-svg { display: block; width: 38px; height: 38px; flex: 0 0 38px; padding: 7px; border-radius: 9px; background: var(--teal); color: #062426; }
         .nav-label { margin: 0 0 10px 12px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
         .side-nav { display: grid; gap: 5px; }
         .side-nav a, .sidebar-toggle { display: flex; align-items: center; gap: 12px; min-height: 42px; padding: 0 12px; border: 1px solid transparent; border-radius: 6px; color: var(--muted); font-size: 13px; text-decoration: none; transition: background .18s, color .18s; }
@@ -70,9 +70,17 @@
         .nav-icon.nav-purple { color: var(--purple); }
         .nav-icon.nav-orange { color: var(--orange); }
         .nav-icon.nav-green { color: var(--green); }
+        .nav-icon-svg { width: 21px; height: 21px; flex: 0 0 21px; color: var(--teal); }
+        .nav-icon-svg.nav-blue { color: var(--blue); }
+        .nav-icon-svg.nav-purple { color: var(--purple); }
+        .nav-icon-svg.nav-orange { color: var(--orange); }
+        .nav-icon-svg.nav-green { color: var(--green); }
         .sidebar-support { margin-top: auto; padding-top: 22px; }
         .sidebar-bottom { display: grid; gap: 12px; margin-top: 14px; }
         .sidebar-user { display: flex; align-items: center; gap: 10px; padding: 12px 7px 4px; border-top: 1px solid var(--panel-line); }
+        .sidebar-user img { width: 36px; height: 36px; flex: 0 0 36px; border-radius: 50%; object-fit: cover; }
+        .side-nav a, .logout-button { font-weight: 700; }
+        .brand-name { font-weight: 800; }
         .avatar { display: grid; width: 32px; height: 32px; flex: 0 0 32px; place-items: center; border-radius: 50%; background: #d9efe8; color: #173c3a; font-size: 12px; font-weight: 700; }
         .sidebar-user strong { display: block; overflow: hidden; max-width: 145px; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
         .sidebar-user small { color: var(--muted); font-size: 11px; }
@@ -86,7 +94,7 @@
         .global-search input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--text); font-size: 13px; }
         .global-search input::placeholder { color: #789995; }
         .topbar-spacer { flex: 1; }
-        .date-label { color: var(--muted); font-size: 12px; white-space: nowrap; }
+        .date-label { color: var(--muted); font-size: 20px; font-style: oblique; white-space: nowrap; }
         .notification-menu { position: relative; }
         .notification-menu summary { position: relative; display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid var(--panel-line); border-radius: 6px; color: var(--text); cursor: pointer; list-style: none; }
         .notification-menu summary::-webkit-details-marker { display: none; }
@@ -221,6 +229,7 @@
         .app-shell.is-collapsed { grid-template-columns: 76px minmax(0, 1fr); }
         .is-collapsed .brand { justify-content: center; margin-left: 0; }
         .is-collapsed .brand-name, .is-collapsed .nav-label, .is-collapsed .side-nav .nav-text, .is-collapsed .sidebar-user > div, .is-collapsed .logout-text { display: none; }
+        .is-collapsed .sidebar-user > span:last-child { display: none; }
         .is-collapsed .side-nav a, .is-collapsed .logout-button { justify-content: center; padding: 0; }
         .is-collapsed .sidebar-user { justify-content: center; padding-left: 0; padding-right: 0; }
         @media (max-width: 900px) {
@@ -230,6 +239,16 @@
             .side-nav a, .logout-button { justify-content: center; padding: 0; }
             .sidebar-user { justify-content: center; padding-left: 0; padding-right: 0; }
             .collapse-button { display: none; }
+            .app-shell:not(.is-collapsed) { grid-template-columns: 236px minmax(0, 1fr); }
+            .app-shell:not(.is-collapsed) .brand { justify-content: flex-start; margin-left: 4px; }
+            .app-shell:not(.is-collapsed) .brand-name,
+            .app-shell:not(.is-collapsed) .nav-label,
+            .app-shell:not(.is-collapsed) .side-nav .nav-text,
+            .app-shell:not(.is-collapsed) .sidebar-user > span:last-child,
+            .app-shell:not(.is-collapsed) .logout-text { display: block; }
+            .app-shell:not(.is-collapsed) .side-nav a,
+            .app-shell:not(.is-collapsed) .logout-button { justify-content: flex-start; padding: 0 12px; }
+            .app-shell:not(.is-collapsed) .sidebar-user { justify-content: flex-start; padding-left: 7px; padding-right: 7px; }
             .topbar { padding: 0 22px; }
             .page-wrap { padding: 26px 22px 44px; }
         }
@@ -257,48 +276,44 @@
     <div class="app-shell" id="app-shell">
         <aside class="sidebar" aria-label="Main navigation">
             <a class="brand" href="{{ route('dashboard') }}">
-                <span class="brand-mark" aria-hidden="true">D</span>
+                <svg class="brand-mark-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/><path d="m5 17 4-4 3 2 6-6"/></svg>
                 <span class="brand-name">Deadline Risk AI</span>
             </a>
-            <button class="collapse-button" id="collapse-sidebar" type="button" aria-label="Collapse sidebar" title="Collapse sidebar">⇤</button>
+            <a class="sidebar-user" href="{{ route('settings.index', 'school-profile') }}">@if (auth()->user()->profile_image)<img src="{{ asset('storage/'.auth()->user()->profile_image) }}" alt="">@else<span class="avatar">{{ strtoupper(substr(auth()->user()->nickname ?: auth()->user()->name, 0, 1)) }}</span>@endif<span><strong>{{ auth()->user()->nickname ?: auth()->user()->name }}</strong><small>Student profile · Edit</small></span></a>
             <p class="nav-label">Main</p>
             <nav class="side-nav">
-                <a class="{{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><span class="nav-icon" aria-hidden="true">▦</span><span class="nav-text">Overview</span></a>
-                <a class="{{ request()->routeIs('tasks.*') ? 'active' : '' }}" href="{{ route('tasks.index') }}"><span class="nav-icon" aria-hidden="true">✓</span><span class="nav-text">Tasks</span></a>
-                <a class="{{ request()->routeIs('courses.*') ? 'active' : '' }}" href="{{ route('courses.index') }}"><span class="nav-icon nav-blue" aria-hidden="true">▤</span><span class="nav-text">Courses</span></a>
-                <a class="{{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}"><span class="nav-icon nav-orange" aria-hidden="true">◷</span><span class="nav-text">Calendar</span></a>
-                <a class="{{ request()->routeIs('risk-report') ? 'active' : '' }}" href="{{ route('risk-report') }}"><span class="nav-icon nav-purple" aria-hidden="true">⌁</span><span class="nav-text">Risk report</span></a>
-                <a class="{{ request()->routeIs('friends.*') ? 'active' : '' }}" href="{{ route('friends.index') }}"><span class="nav-icon nav-green" aria-hidden="true">♧</span><span class="nav-text">Friends</span></a>
+                <a class="{{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 3 6-7"/><path d="M17 6h4v4"/></svg><span class="nav-text">Overview</span></a>
+                <a class="{{ request()->routeIs('tasks.*') ? 'active' : '' }}" href="{{ route('tasks.index') }}"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5h11M9 12h11M9 19h11"/><path d="m3 5 1 1 2-2M3 12l1 1 2-2M3 19l1 1 2-2"/></svg><span class="nav-text">Tasks</span></a>
+                <a class="{{ request()->routeIs('courses.*') ? 'active' : '' }}" href="{{ route('courses.index') }}"><svg class="nav-icon-svg nav-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 0 4 22z"/><path d="M4 5.5v14A2.5 2.5 0 0 1 6.5 17H20M8 7h8M8 11h8"/></svg><span class="nav-text">Courses</span></a>
+                <a class="{{ request()->routeIs('calendar') ? 'active' : '' }}" href="{{ route('calendar') }}"><svg class="nav-icon-svg nav-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01"/></svg><span class="nav-text">Calendar</span></a>
+                <a class="{{ request()->routeIs('risk-report') ? 'active' : '' }}" href="{{ route('risk-report') }}"><svg class="nav-icon-svg nav-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5M4 19h17"/><path d="m7 15 4-4 3 2 6-7"/><path d="M16 6h4v4"/></svg><span class="nav-text">Risk report</span></a>
+                <a class="{{ request()->routeIs('friends.*') ? 'active' : '' }}" href="{{ route('friends.index') }}"><svg class="nav-icon-svg nav-green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="nav-text">Friends</span></a>
             </nav>
             <div class="sidebar-support">
                 <p class="nav-label">Support</p>
                 <nav class="side-nav">
-                    <a href="{{ route('dashboard') }}#feedback"><span class="nav-icon nav-blue" aria-hidden="true">↗</span><span class="nav-text">Feedback</span></a>
+                    <a href="{{ route('dashboard') }}#feedback"><svg class="nav-icon-svg nav-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg><span class="nav-text">Feedback</span></a>
                     <a href="{{ route('dashboard') }}#help"><span class="nav-icon" aria-hidden="true">?</span><span class="nav-text">Help</span></a>
                     <a class="{{ request()->routeIs('settings.*') ? 'active' : '' }}" href="{{ route('settings.index') }}"><span class="nav-icon" aria-hidden="true">⚙</span><span class="nav-text">Settings</span></a>
                 </nav>
             </div>
             <div class="sidebar-bottom">
-                <div class="sidebar-user">
-                    <span class="avatar" aria-hidden="true">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
-                    <div><strong>{{ auth()->user()->name }}</strong><small>Student workspace</small></div>
-                </div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button class="logout-button" type="submit"><span class="nav-icon" aria-hidden="true">⇥</span><span class="logout-text">Sign out</span></button>
+                    <button class="logout-button" type="submit"><span class="logout-text">Sign out</span></button>
                 </form>
             </div>
         </aside>
 
         <div class="main-area">
             <header class="topbar">
-                <button class="mobile-menu" id="mobile-menu" type="button" aria-label="Open navigation">☰</button>
-                <form class="global-search" method="GET" action="{{ route('tasks.index') }}" role="search">
+                <button class="mobile-menu" id="mobile-menu" type="button" aria-label="Toggle sidebar navigation" aria-expanded="true" title="Toggle sidebar navigation">☰</button>
+                <form class="global-search" method="GET" action="{{ request()->routeIs('friends.*') ? route('friends.index') : route('tasks.index') }}" role="search">
                     <span aria-hidden="true">⌕</span>
-                    <input type="search" name="q" value="{{ request('q') }}" placeholder="Search tasks..." aria-label="Search tasks">
+                    <input type="search" name="q" value="{{ request('q') }}" placeholder="{{ request()->routeIs('friends.*') ? 'Search a friend...' : 'Search tasks...' }}" aria-label="{{ request()->routeIs('friends.*') ? 'Search a friend' : 'Search tasks' }}">
                 </form>
                 <span class="topbar-spacer"></span>
-                <span class="date-label">{{ now()->format('D, M j, Y') }}</span>
+                <span class="date-label" id="live-clock" aria-live="off">{{ now()->format('H:i:s') }}</span>
                 <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to light mode" aria-pressed="false" title="Switch to light mode">☀</button>
                 @isset($notifications)
                     <details class="notification-menu">
@@ -356,18 +371,51 @@
         });
 
         const appShell = document.getElementById('app-shell');
-        const collapseSidebar = document.getElementById('collapse-sidebar');
-        const sidebarKey = 'deadline-risk-sidebar-collapsed';
+        const sidebarToggle = document.getElementById('mobile-menu');
+        const sidebarStorageKey = 'deadline-risk-sidebar-collapsed';
+        const mobileSidebar = window.matchMedia('(max-width: 620px)');
 
-        if (localStorage.getItem(sidebarKey) === 'true') appShell.classList.add('is-collapsed');
-        collapseSidebar.addEventListener('click', () => {
-            appShell.classList.toggle('is-collapsed');
-            localStorage.setItem(sidebarKey, appShell.classList.contains('is-collapsed'));
+        if (!mobileSidebar.matches && localStorage.getItem(sidebarStorageKey) === 'true') {
+            appShell.classList.add('is-collapsed');
+        }
+
+        const updateSidebarToggle = () => {
+            const isExpanded = mobileSidebar.matches
+                ? appShell.classList.contains('menu-open')
+                : !appShell.classList.contains('is-collapsed');
+
+            sidebarToggle.setAttribute('aria-expanded', String(isExpanded));
+            sidebarToggle.setAttribute('aria-label', `${isExpanded ? 'Close' : 'Open'} sidebar navigation`);
+            sidebarToggle.title = `${isExpanded ? 'Close' : 'Open'} sidebar navigation`;
+        };
+
+        sidebarToggle.addEventListener('click', () => {
+            if (mobileSidebar.matches) {
+                appShell.classList.toggle('menu-open');
+            } else {
+                appShell.classList.toggle('is-collapsed');
+                localStorage.setItem(sidebarStorageKey, String(appShell.classList.contains('is-collapsed')));
+            }
+
+            updateSidebarToggle();
         });
-        document.getElementById('mobile-menu').addEventListener('click', () => appShell.classList.toggle('menu-open'));
+
+        mobileSidebar.addEventListener('change', () => {
+            appShell.classList.remove('menu-open');
+            updateSidebarToggle();
+        });
+
+        updateSidebarToggle();
+        const liveClock = document.getElementById('live-clock');
+        if (liveClock) {
+            window.setInterval(() => {
+                liveClock.textContent = new Date().toLocaleTimeString('en-GB');
+            }, 1000);
+        }
         document.addEventListener('click', (event) => {
-            if (appShell.classList.contains('menu-open') && !event.target.closest('.sidebar') && !event.target.closest('#mobile-menu')) {
+            if (mobileSidebar.matches && appShell.classList.contains('menu-open') && !event.target.closest('.sidebar') && !event.target.closest('#mobile-menu')) {
                 appShell.classList.remove('menu-open');
+                updateSidebarToggle();
             }
         });
 

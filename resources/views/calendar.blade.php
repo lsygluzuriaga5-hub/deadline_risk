@@ -4,15 +4,15 @@
 @section('eyebrow', 'Plan your month')
 @section('heading', 'Calendar')
 @section('subtitle', 'See assignments and deadlines at a glance.')
-@section('page-action')<a class="button" href="{{ route('tasks.create') }}">＋ Add task</a>@endsection
+@section('page-action')@endsection
 
 @section('content')
     <style>
         .calendar-panel { overflow: hidden; }
         .calendar-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 17px; }
         .calendar-toolbar h2 { margin: 0; font-family: 'Raleway', sans-serif; font-size: 17px; }
-        .calendar-nav { display: flex; gap: 7px; }
-        .calendar-nav a { display: grid; width: 33px; height: 33px; place-items: center; border: 1px solid var(--panel-line); border-radius: 5px; color: #c8ddd7; text-decoration: none; }
+        .calendar-nav { display: flex; align-items: center; gap: 7px; }
+        .calendar-nav a { display: grid; min-width: 38px; height: 36px; padding: 0 10px; place-items: center; border: 1px solid var(--panel-line); border-radius: 5px; color: var(--text); text-decoration: none; background: var(--panel); }
         .calendar-nav a:hover { border-color: var(--teal); color: white; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid var(--panel-line); border-left: 1px solid var(--panel-line); }
         .calendar-weekday { padding: 9px 6px; color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: .06em; text-align: center; text-transform: uppercase; }
@@ -23,7 +23,8 @@
         .calendar-day.today .calendar-day-number { color: var(--teal); font-weight: 700; }
         .calendar-event { display: block; overflow: hidden; margin-top: 6px; padding: 4px 5px; border-left: 2px solid var(--blue); border-radius: 3px; background: rgba(96,165,250,.11); color: var(--blue); font-size: 9px; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
         .calendar-event.high, .calendar-event.overdue { border-color: var(--red); background: rgba(251,113,133,.12); color: var(--red); }
-        .calendar-event.medium { border-color: var(--orange); background: rgba(251,191,36,.12); color: var(--orange); }
+        .calendar-event.medium { border-color: #8b5cf6; background: rgba(139,92,246,.2); color: #c4a7ff; }
+        :root[data-theme="light"] .calendar-event.medium { border-color: #6d28d9; background: #f0eaff; color: #4c1d95; }
         .calendar-event.low, .calendar-event.completed { border-color: var(--green); background: rgba(74,222,128,.1); color: var(--green); }
         .calendar-holiday { display: block; overflow: hidden; margin-top: 6px; padding: 4px 5px; border-left: 2px solid var(--purple); border-radius: 3px; background: rgba(167,139,250,.12); color: var(--purple); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
         .calendar-holiday.working { border-color: var(--teal); background: rgba(67,214,197,.1); color: var(--teal); }
@@ -59,7 +60,7 @@
                 @endforeach
             @endforeach
         </div>
-        <div class="calendar-legend"><span><i></i>High risk / overdue</span><span><i class="medium"></i>Medium risk</span><span><i class="low"></i>Low risk</span><span><i class="completed"></i>Completed</span><span><i class="holiday"></i>Holiday</span><span><i class="working"></i>Special working day</span></div>
+        <div class="calendar-legend"><span><i></i>High risk / overdue</span><span><i class="medium"></i>Moderate risk</span><span><i class="low"></i>Low risk</span><span><i class="completed"></i>Completed</span><span><i class="holiday"></i>Holiday</span><span><i class="working"></i>Special working day</span></div>
         <p class="muted" style="margin:12px 0 0;font-size:10px;">Eidul Fitr and Eidul Adha dates will be added when officially announced.</p>
     </section>
 @endsection

@@ -33,6 +33,9 @@
         .settings-form label { display: grid; gap: 6px; color: var(--muted); font-size: 11px; }
         .settings-form input { width: 100%; min-width: 0; min-height: 38px; padding: 8px 10px; border: 1px solid var(--panel-line); border-radius: 6px; background: var(--page); color: var(--text); }
         .settings-form .button { justify-self: start; grid-column: 1 / -1; }
+        .settings-profile-photo { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; }
+        .settings-profile-photo img, .settings-profile-photo .avatar { width: 56px; height: 56px; flex: 0 0 56px; border-radius: 50%; object-fit: cover; }
+        .settings-profile-photo p { margin: 0; color: var(--muted); font-size: 11px; }
         .settings-status { min-height: 18px; color: var(--green); font-size: 11px; }
         @media (max-width: 760px) { .settings-page { grid-template-columns: 1fr; } .settings-menu { position: static; display: flex; overflow-x: auto; } .settings-menu a { flex: 0 0 auto; } .settings-form { grid-template-columns: 1fr; } }
     </style>
@@ -57,6 +60,25 @@
 
         <div class="settings-content">
             @if($section === 'school-profile')<section class="settings-card" id="school-profile" aria-labelledby="school-title">
+                <h2>Student profile</h2>
+                <p>Update the name and photo shown in your sidebar.</p>
+                <div class="settings-profile-photo">
+                    @if (auth()->user()->profile_image)
+                        <img src="{{ asset('storage/'.auth()->user()->profile_image) }}" alt="{{ auth()->user()->nickname ?: auth()->user()->name }}'s profile photo">
+                    @else
+                        <span class="avatar" aria-hidden="true">{{ strtoupper(substr(auth()->user()->nickname ?: auth()->user()->name, 0, 1)) }}</span>
+                    @endif
+                    <p>{{ auth()->user()->profile_image ? 'Current profile photo' : 'No profile photo uploaded yet.' }}</p>
+                </div>
+                <form class="settings-form" method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data">
+                    @csrf @method('PUT')
+                    <label>Full name<input name="name" maxlength="255" value="{{ old('name', auth()->user()->name) }}" required></label>
+                    <label>Nickname<input name="nickname" maxlength="60" value="{{ old('nickname', auth()->user()->nickname) }}"></label>
+                    <label>Email<input name="email" type="email" value="{{ old('email', auth()->user()->email) }}" required></label>
+                    <label>Profile image<input name="profile_image" type="file" accept="image/*"></label>
+                    <button class="button small" type="submit">Save student profile</button>
+                </form>
+            </section><section class="settings-card" id="school-profile" aria-labelledby="school-title">
                 <h2 id="school-title">School profile</h2>
                 <p>Add school details to personalize your workspace. These details are saved in this browser.</p>
                 <form class="settings-form" id="school-profile-form">
@@ -82,8 +104,8 @@
                     <div class="settings-row"><div><strong>Connected Canvas account</strong><small>{{ auth()->user()->canvas_user_name ?: 'Canvas user' }} · ID {{ auth()->user()->canvas_user_id }}</small></div><span class="settings-value">Connected</span></div>
                     <div class="settings-row"><div><strong>Manage authorization</strong><small>Reconnect to replace the Canvas account linked here, or disconnect it.</small></div><div class="settings-actions"><a class="button secondary small" href="{{ route('canvas.connect') }}">Replace account</a><form method="POST" action="{{ route('canvas.disconnect') }}" onsubmit="return confirm('Disconnect this Canvas account?')">@csrf @method('DELETE')<button class="button danger small" type="submit">Disconnect</button></form></div></div>
                 @else
-                    @if($canvasLocalTokenConfigured)
-                        <div class="settings-empty" style="margin-bottom:14px;">Using the local Canvas test token from the server environment. Sync is enabled for local development; OAuth is needed outside this local app.</div>
+                    @if($canvasApiKeyConfigured)
+                        <div class="settings-empty" style="margin-bottom:14px;">A Canvas API key is configured. You can sync Canvas assignments directly into your task list.</div>
                         <div class="settings-actions"><a class="button" href="{{ route('tasks.index') }}">Go to tasks and sync</a><a class="button secondary" href="{{ route('dashboard') }}">Continue to dashboard</a></div>
                     @else
                         <div class="settings-empty" style="margin-bottom:14px;">No Canvas account is connected yet.</div>
