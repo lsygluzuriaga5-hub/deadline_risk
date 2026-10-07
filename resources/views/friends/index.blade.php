@@ -11,9 +11,13 @@
         .friend-groups { display: grid; gap: 14px; }
         .friends-layout > .panel, .friend-groups > .panel { border: 0; border-bottom: 1px solid var(--panel-line); border-radius: 0; background: transparent; box-shadow: none; padding: 12px 0; }
         .friend-search { grid-column: 1 / -1; margin-bottom: 12px; }
-        .chat-thread { max-height: 220px; overflow: auto; padding: 10px; margin: 10px 0; border: 1px solid var(--panel-line); border-radius: 7px; }
-        .chat-message { margin: 5px 0; font-size: 11px; }
-        .chat-message small { display: block; color: var(--muted); }
+        .chat-thread { display: flex; width: 100%; max-height: 300px; box-sizing: border-box; flex-direction: column; gap: 8px; overflow: auto; padding: 12px; margin: 10px 0; border: 1px solid var(--panel-line); border-radius: 7px; background: rgba(5, 24, 26, .42); }
+        .chat-message { max-width: min(82%, 420px); margin: 0; padding: 8px 10px; border: 1px solid var(--panel-line); border-radius: 10px; font-size: 12px; overflow-wrap: anywhere; }
+        .chat-message-own { align-self: flex-end; border-color: rgba(91, 197, 166, .38); border-bottom-right-radius: 3px; background: rgba(47, 130, 105, .2); }
+        .chat-message-theirs { align-self: flex-start; border-bottom-left-radius: 3px; background: rgba(255, 255, 255, .045); }
+        .chat-message small { display: block; margin-top: 5px; color: var(--muted); }
+        .chat-compose { display: flex; gap: 8px; }
+        .chat-compose input { min-width: 0; flex: 1; }
         .friend-list { display: grid; }
         .friend-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-top: 1px solid var(--panel-line); }
         .friend-row:first-child { border-top: 0; }
@@ -21,6 +25,11 @@
         .friend-details { min-width: 0; flex: 1; }
         .friend-details strong { display: block; overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
         .friend-details small { display: block; margin-top: 4px; overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+        .friend-row > details { position: relative; min-width: 180px; flex: 1; }
+        .friend-chat-window { position: absolute; z-index: 20; top: calc(100% + 8px); right: 0; width: min(360px, calc(100vw - 40px)); padding: 12px; border: 1px solid var(--panel-line); border-radius: 10px; background: #102b2d; box-shadow: 0 16px 40px rgba(0, 0, 0, .4); }
+        .friend-chat-window h3 { margin: 0; font-size: 13px; }
+        .friend-row details > summary { width: fit-content; cursor: pointer; list-style: none; }
+        .friend-row details > summary::-webkit-details-marker { display: none; }
         .friend-actions { display: flex; gap: 7px; }
         .discovery-results { grid-column: 1 / -1; }
         .request-form { display: grid; gap: 12px; }
@@ -59,7 +68,7 @@
                     <div class="friend-list">
                         @foreach ($friends as $friend)
                             @continue($friendSearch !== '' && !str_contains(strtolower($friend->name.' '.$friend->email), strtolower($friendSearch)))
-                            <article class="friend-row"><span class="friend-avatar" aria-hidden="true">{{ strtoupper(substr($friend->name, 0, 1)) }}</span><div class="friend-details"><strong>{{ $friend->name }}</strong><small>{{ $friend->email }} · {{ $friend->online ? 'Online' : 'Offline' }}</small></div><details><summary class="button secondary small">Chat</summary><div class="chat-thread">@forelse ($friend->chat_messages as $message)<p class="chat-message"><strong>{{ $message->sender_id === auth()->id() ? 'You' : $friend->name }}:</strong> {{ $message->body }}<small>{{ $message->created_at->format('M j, H:i') }}</small></p>@empty<p class="muted">Start a conversation.</p>@endforelse</div><form method="POST" action="{{ route('friends.messages.store') }}">@csrf<input type="hidden" name="friend_id" value="{{ $friend->id }}"><input class="filter-control" name="body" maxlength="2000" placeholder="Write a message" required><button class="button small" type="submit">Send</button></form></details></article>
+                            <article class="friend-row"><span class="friend-avatar" aria-hidden="true">{{ strtoupper(substr($friend->name, 0, 1)) }}</span><div class="friend-details"><strong>{{ $friend->name }}</strong><small>{{ $friend->email }} · {{ $friend->online ? 'Online' : 'Offline' }}</small></div><details><summary class="button secondary small">Chat</summary><div class="friend-chat-window"><h3>Chat with {{ $friend->nickname ?: $friend->name }}</h3><div class="chat-thread" aria-label="Conversation with {{ $friend->name }}">@forelse ($friend->chat_messages as $message)<p class="chat-message {{ $message->sender_id === auth()->id() ? 'chat-message-own' : 'chat-message-theirs' }}"><strong>{{ $message->sender_id === auth()->id() ? 'You' : ($friend->nickname ?: $friend->name) }}</strong><br>{{ $message->body }}<small>{{ $message->created_at->format('M j, H:i') }}</small></p>@empty<p class="muted">Start a conversation.</p>@endforelse</div><form class="chat-compose" method="POST" action="{{ route('friends.messages.store') }}">@csrf<input type="hidden" name="friend_id" value="{{ $friend->id }}"><input class="filter-control" name="body" maxlength="2000" placeholder="Write a message" required><button class="button small" type="submit">Send</button></form></div></details></article>
                         @endforeach
                     </div>
                 @else

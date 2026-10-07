@@ -4,6 +4,10 @@ use App\Models\User;
 
 return [
 
+    'otp' => [
+        'enabled' => env('AUTH_OTP_ENABLED', true),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Authentication Defaults

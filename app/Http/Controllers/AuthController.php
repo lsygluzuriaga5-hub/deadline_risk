@@ -40,6 +40,14 @@ class AuthController extends Controller
                 ->onlyInput('email');
         }
 
+        if (! config('auth.otp.enabled')) {
+            $request->session()->forget('auth_otp');
+            Auth::login($user, $request->boolean('remember'));
+            $request->session()->regenerate();
+
+            return redirect()->intended(route('dashboard'));
+        }
+
         return $this->sendLoginOtp($request, $user, $request->boolean('remember'));
     }
 
