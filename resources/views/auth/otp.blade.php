@@ -1,4 +1,4 @@
-@extends('layouts.app')
+/* @extends('layouts.app')
 
 @section('content')
 <section class="auth-card" aria-labelledby="otp-title">
@@ -24,3 +24,5 @@
     <p class="auth-switch"><a href="{{ route('home') }}">Back to sign in</a></p>
 </section>
 @endsection
+
+*/
